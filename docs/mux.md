@@ -1,10 +1,10 @@
 # Mux Free cho CodePath Academy
 
-Ứng dụng hỗ trợ upload trực tiếp từ trình duyệt lên Mux bằng UpChunk, phát HLS bằng Mux Player và signed playback. Mux là tùy chọn: thiếu khóa cấu hình sẽ không ảnh hưởng đăng nhập, học bài văn bản hoặc video MP4 cũ.
+Ứng dụng hỗ trợ upload trực tiếp từ trình duyệt lên Mux bằng UpChunk, phát HLS bằng Mux Player và signed playback. Mux là tùy chọn: thiếu khóa cấu hình sẽ không ảnh hưởng đăng nhập, học bài văn bản hoặc video từ URL trực tiếp.
 
 ## 1. Tạo tài khoản và khóa
 
-1. Đăng ký [Mux](https://dashboard.mux.com/) và chọn gói **Free**. Theo [bảng giá Mux](https://www.mux.com/pricing), Free hiện hỗ trợ tối đa 10 video lưu trữ và 100.000 phút truyền phát mỗi tháng; kiểm tra hạn mức trên tài khoản trước khi upload. Ứng dụng không tự đăng ký hoặc thay đổi gói dịch vụ.
+1. Đăng ký [Mux](https://dashboard.mux.com/) và chọn gói **Free** nếu tài khoản có tùy chọn này. Kiểm tra hạn mức và Usage trên Dashboard cùng [bảng giá Mux](https://www.mux.com/pricing) trước khi upload; hạn mức của dịch vụ có thể thay đổi. Ứng dụng không tự đăng ký hoặc thay đổi gói dịch vụ.
 2. Trong Settings → API Access Tokens, tạo token cho environment muốn sử dụng với quyền **Mux Video Read và Write**. Lưu Token ID và Token Secret.
 3. Trong Settings → Signing Keys, tạo URL signing key trong **cùng environment**. Lưu Signing Key ID và private key Base64 do Mux trả về. Đây là khóa khác với API token.
 4. Không bật các dịch vụ trả phí bổ sung để thử tính năng này. Upload từ ứng dụng dùng `video_quality=basic` và chỉ tạo playback policy `signed`; không tạo MP4 tải xuống, DRM hoặc tác vụ AI.
@@ -29,7 +29,7 @@ docker compose up -d --build backend frontend
 docker compose logs --tail 80 backend
 ```
 
-Flyway tự chạy `V2__lesson_mux_video.sql` để bổ sung thông tin video vào bài học. Không thay đổi V1 và không cần xóa volume/database. Chạy Java trực tiếp thì truyền bốn biến MUX qua environment; Spring không tự đọc `.env`.
+Flyway tự áp dụng các migration schema còn thiếu khi backend khởi động. Giữ nguyên migration đã áp dụng và volume dữ liệu. Chạy Java trực tiếp thì truyền bốn biến MUX qua environment; Spring không tự đọc `.env`.
 
 ## 3. Upload và xem thử
 
@@ -40,7 +40,7 @@ Flyway tự chạy `V2__lesson_mux_video.sql` để bổ sung thông tin video v
 5. Mở bài học trên trang học. ADMIN và học viên đã đăng ký được xem bài riêng. Bài **xem thử** của khóa đã xuất bản được xem công khai.
 6. Muốn thay video, dùng **Xóa video Mux** rồi upload lại. Nút này xóa asset trên Mux hoặc hủy upload đang chờ. Cần xóa video Mux trước khi xóa bài học/chương để không bỏ lại video chiếm hạn mức.
 
-Video Mux được ưu tiên khi bài học có cả Mux và URL MP4. Sau khi xóa video Mux, URL MP4 cũ hoạt động trở lại.
+Video Mux được ưu tiên khi bài học có cả Mux và URL MP4. Sau khi xóa liên kết Mux, player có thể sử dụng URL MP4 đã cấu hình trong bài.
 
 ## 4. Cách hoạt động và giới hạn
 
@@ -56,8 +56,10 @@ Video Mux được ưu tiên khi bài học có cả Mux và URL MP4. Sau khi x�
 
 - **Chưa cấu hình Mux**: kiểm tra bốn biến trong `.env`, rồi tạo lại container backend bằng `docker compose up -d backend`.
 - **HTTP 401/403 từ Mux**: token sai, thiếu quyền Video hoặc dùng sai environment.
-- **Không upload được từ browser**: địa chỉ mở frontend phải khớp `app.frontend-url` (local mặc định `http://localhost:5173`), không dùng `127.0.0.1` thay thế. Khi đổi domain, cập nhật `APP_FRONTENDURL` trong Compose và build/recreate backend.
-- **Timed out/errored**: xóa phiên/video Mux rồi thử lại với video hợp lệ; nếu đã có 10 video, giải phóng hạn mức trong Dashboard.
+- **Không upload được từ browser**: địa chỉ mở frontend phải khớp `app.frontend-url` (local mặc định `http://localhost:5173`), không dùng `127.0.0.1` thay thế. Khi đổi domain, cập nhật `FRONTEND_URL` trong `.env`; Compose truyền giá trị này vào `APP_FRONTENDURL`. Tạo lại backend sau thay đổi.
+- **Timed out/errored**: xóa phiên/video Mux rồi thử lại với video hợp lệ; nếu hết hạn mức lưu trữ, giải phóng asset phù hợp trong Dashboard và đồng bộ lại liên kết bài học.
 - **Video ready nhưng không phát**: kiểm tra signing key và API token thuộc cùng environment; thử **Tải lại quyền phát video**. Nếu đã xóa asset trên Dashboard, cập nhật trạng thái và xóa liên kết cũ trong trình sửa bài học.
 
 Kiểm tra phần mềm bằng `docker build --target test -t codepath-academy-tests .`, `npm --prefix frontend run lint` và `npm --prefix frontend run build`. Các test tự động không upload video hoặc sử dụng tài khoản Mux thật.
+
+Luồng chi tiết: [upload và xóa video](12-video-upload.md), [cấp token và phát video](13-video-playback.md), [popup tiếp tục xem](14-resume-confirmation.md), [lưu tiến độ](15-learning-progress.md). Xem thêm [cấu hình](configuration.md) và [mô hình dữ liệu](data-model.md).

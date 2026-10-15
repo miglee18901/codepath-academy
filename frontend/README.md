@@ -1,19 +1,54 @@
-# CodePath frontend
+# CodePath Academy Web
 
-React 19, React Router 7, Vite 8.
+Giao diện React của CodePath Academy. Package: `codepath-academy-web`.
 
-```bash
+## Chạy độc lập
+
+Cần Node.js 22 tương thích Vite và backend tại `http://localhost:8080`:
+
+```powershell
 npm ci
 npm run dev
-npm run build
-npm run lint
 ```
 
-Mặc định API tại http://localhost:8080. Đặt VITE_API_URL trong frontend/.env.local để thay đổi.
-Đặt VITE_RECAPTCHA_SITE_KEY khi dùng CAPTCHA thật, cùng secret tương ứng ở backend.
+Cấu hình `frontend/.env.local`:
 
-Trang công khai: /, /courses/:id, /learn/:courseId/:lessonId, /login, /register.
-Trang học viên: /my-courses, /orders, /profile.
-Trang quản trị: /admin, /admin/courses/new, /admin/courses/:id.
+```dotenv
+VITE_API_URL=http://localhost:8080
+VITE_RECAPTCHA_SITE_KEY=your-site-key
+```
 
-Xem README ở thư mục gốc để chạy toàn bộ qua Docker.
+Các biến `VITE_*` công khai trong browser. Mux token/private key, PayOS secret và SMTP password chỉ nằm ở backend.
+
+## Trang và quyền
+
+| Route | Mục đích |
+|---|---|
+| `/` | Tìm kiếm và lọc khóa học |
+| `/courses/:id` | Chi tiết và đăng ký khóa học |
+| `/learn/:courseId/:lessonId?` | Đọc bài, xem video, lưu tiến độ |
+| `/login`, `/register` | Đăng nhập và đăng ký OTP |
+| `/my-courses`, `/orders`, `/profile` | Khu vực tài khoản |
+| `/admin`, `/admin/courses/new`, `/admin/courses/:id` | Quản trị nội dung |
+
+`Guard` hỗ trợ điều hướng UI; backend thực thi quyền truy cập thật.
+
+## Tổ chức mã
+
+- `src/api.js`: Axios, Bearer token, refresh một lần khi nhận 401.
+- `src/pages/Auth.jsx`: đăng ký OTP và đăng nhập.
+- `src/pages/Courses.jsx`: catalog, chi tiết, thư viện, màn hình học.
+- `src/pages/Account.jsx`: đơn hàng và hồ sơ.
+- `src/pages/Admin.jsx`, `ContentEditor.jsx`: quản trị khóa/chương/bài.
+- `src/components/MuxVideo.jsx`: upload Mux, Mux Player và MP4.
+- `src/components/useVideoProgress.js`: checkpoint, lưu local và đồng bộ backend.
+- `src/components/ResumeVideoDialog.jsx`: popup thời gian đã xem, tiếp tục hoặc xem từ đầu.
+
+## Kiểm tra và tài liệu
+
+```powershell
+npm run lint
+npm run build
+```
+
+[Chạy toàn hệ thống](../README.md) · [Danh mục tài liệu](../docs/README.md) · [Cấu hình](../docs/configuration.md) · [Upload video](../docs/12-video-upload.md) · [Phát video](../docs/13-video-playback.md) · [Popup xem tiếp](../docs/14-resume-confirmation.md).
