@@ -1,0 +1,13 @@
+.git
+.gradle
+.idea
+.vscode
+build
+frontend
+*.exe
+.env
+.env.*
+src/main/resources/application.properties
+.qa
+artifacts
+scripts
