@@ -1,0 +1,23 @@
+# Use with: docker compose -f docker-compose.yml -f compose.ngrok.yml up -d --build --wait
+services:
+  backend:
+    environment:
+      APP_FRONTENDURL: https://${NGROK_DOMAIN:?Set NGROK_DOMAIN in .env without https or a path}
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+  frontend:
+    environment:
+      VITE_API_URL: ""
+      FRONTEND_PUBLIC_URL: https://${NGROK_DOMAIN:?Set NGROK_DOMAIN in .env without https or a path}
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?Set NGROK_AUTHTOKEN in .env}
+    command:
+      - http
+      - http://frontend:5173
+      - --url=https://${NGROK_DOMAIN:?Set NGROK_DOMAIN in .env without https or a path}
+      - --log=stdout
+    depends_on:
+      frontend:
+        condition: service_started

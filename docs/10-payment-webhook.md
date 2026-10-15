@@ -22,6 +22,8 @@ Không lấy số tiền hoặc trạng thái từ URL return của trình duy�
 
 Local muốn nhận callback thật cần URL backend mà PayOS truy cập được và cấu hình webhook tương ứng. Không đưa endpoint chưa xác thực hay secret thật vào script giả lập. Bài kiểm thử webhook cục bộ dùng checksum key kiểm thử.
 
+Nếu webhook bị mất hoặc cấu hình URL cũ, [đối soát PayOS](19-payment-reconciliation.md) có thể xác nhận đơn đã trả tiền bằng API server. Đối soát dùng cùng hàm settle và khóa dòng nên không tạo thêm payment/enrollment khi webhook tới sau.
+
 ## Mã nguồn
 
 [AcademyController](../src/main/java/com/codepath/academy/controller/AcademyController.java), [OrderService](../src/main/java/com/codepath/academy/service/OrderService.java), [PayOsGateway](../src/main/java/com/codepath/academy/service/PayOsGateway.java), [gửi thư](16-email-delivery.md).

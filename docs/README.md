@@ -6,6 +6,7 @@ Tài liệu mô tả hành vi đang triển khai. Mỗi luồng có một file r
 - [Cấu hình và vận hành](configuration.md)
 - [Mô hình dữ liệu](data-model.md)
 - [Thiết lập Mux](mux.md)
+- [Chạy HTTPS qua ngrok](ngrok.md)
 
 | Luồng | Tài liệu |
 | --- | --- |
@@ -27,5 +28,6 @@ Tài liệu mô tả hành vi đang triển khai. Mỗi luồng có một file r
 | Gửi email | [16](16-email-delivery.md) |
 | Báo cáo quản trị | [17](17-admin-reporting.md) |
 | Tạo dữ liệu kiểm thử | [18](18-demo-data.md) |
+| Đối soát thanh toán và khôi phục quyền học | [19](19-payment-reconciliation.md) |
 
 Khi đổi API hoặc quy tắc nghiệp vụ, cập nhật luồng tương ứng cùng mã nguồn. Không đưa mật khẩu thật, token hoặc khóa riêng vào tài liệu.

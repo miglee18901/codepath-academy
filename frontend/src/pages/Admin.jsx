@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Link, useNavigate, useParams} from "react-router-dom";
 import api, {errorMessage} from "../api";
-import {Notice, Status} from "../ui";
+import {Notice, Status, Pagination} from "../ui";
 import {useLoad, money} from "../helpers";
 import {OrderTable} from "./Account";
 import {SectionEditor} from "./ContentEditor";
@@ -11,7 +11,10 @@ export function Admin() {
     const [error, setError] = useState("");
     const [name, setName] = useState("");
     const stats = useLoad(() => api.get("/api/admin/stats"));
-    const courses = useLoad(() => api.get("/api/admin/courses"));
+    const [coursePage, setCoursePage] = useState(0);
+    const courses = useLoad(() => api.get("/api/admin/courses", {
+        params: {page: coursePage, size: 12},
+    }), [coursePage]);
     const orders = useLoad(() => api.get("/api/admin/orders"));
     const students = useLoad(() => api.get("/api/admin/students"));
     const categories = useLoad(() => api.get("/api/categories"));
@@ -141,7 +144,7 @@ export function Admin() {
                             </tr>
                             </thead>
                             <tbody>
-                            {courses.data?.map((c) => (
+                            {courses.data?.content.map((c) => (
                                 <tr key={c.id}>
                                     <td>
                                         <strong>{c.title}</strong>
@@ -162,6 +165,7 @@ export function Admin() {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination data={courses.data} onChange={setCoursePage} loading={courses.loading}/>
                 </Status>
             )}
             {tab === "orders" && (

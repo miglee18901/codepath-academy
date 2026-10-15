@@ -53,15 +53,18 @@ Lần đầu cần tùy chỉnh, copy `.env.example` thành `.env`; nếu đã c
 - Khóa miễn phí hoạt động khi chưa cấu hình PayOS. Khóa trả phí cần bộ khóa PayOS và webhook HTTPS.
 - Bài văn bản/MP4 hoạt động độc lập. Upload Mux và signed playback cần bốn biến `MUX_*` ở backend.
 - `FRONTEND_URL` là origin frontend cho CORS, URL chuyển về sau thanh toán và origin upload Mux.
-- `FRONTEND_API_URL` là API URL của browser khi chạy Compose. Vite trực tiếp dùng `VITE_API_URL` trong `frontend/.env.local`.
+- `FRONTEND_API_URL` để trống thì browser gọi `/api` cùng domain, Vite proxy tới backend. Có thể đặt URL API riêng khi cần. Vite trực tiếp dùng `VITE_API_URL` trong `frontend/.env.local`.
 
 Xem [cấu hình đầy đủ](docs/configuration.md) và [thiết lập Mux](docs/mux.md). Database `academy_db` được Flyway quản lý; không sửa migration đã áp dụng.
+
+Để dùng một domain HTTPS cho cả website, API và webhook PayOS, xem [hướng dẫn ngrok bằng Docker](docs/ngrok.md).
 
 ## Chức năng
 
 - Khách tìm khóa, xem mục lục và bài xem thử đã xuất bản.
+- Danh sách khóa học và bảng khóa học quản trị phân trang 12 khóa/trang; trang công khai lưu bộ lọc và trang trên URL.
 - Học viên đăng ký CAPTCHA/OTP, đăng nhập, mua khóa và theo dõi đơn hàng.
-- Khóa miễn phí cấp quyền ngay; khóa trả phí cấp quyền sau webhook PayOS hợp lệ.
+- Khóa miễn phí cấp quyền ngay; khóa trả phí cấp quyền sau webhook PayOS hợp lệ hoặc đối soát API PayOS xác nhận đủ tiền.
 - Video Mux dùng token có hạn; dữ liệu video không đi qua backend.
 - Checkpoint lưu mỗi 10 giây và khi dừng/tua/rời trang. Popup khi mở lại cho chọn tiếp tục hoặc xem từ đầu.
 - ADMIN quản lý nội dung, video; xem tài khoản, doanh thu và xuất Excel đơn hàng.
@@ -104,4 +107,4 @@ node scripts/ui_test.cjs
 
 Compose dùng Vite development server cho local. Triển khai thực tế cần build frontend, HTTPS, thông tin SMTP/PayOS/Mux, secret riêng, sao lưu và theo dõi lỗi. Artemis nhúng chưa lưu bền queue email và chưa có transactional outbox.
 
-Chưa có giỏ hàng, mã giảm giá, hoàn tiền, chứng chỉ, bài tập tự chấm, phân trang danh sách hoặc giảng viên tự quản trị. Signed video không phải DRM; URL MP4 bên ngoài phụ thuộc quyền truy cập của nơi lưu trữ.
+Chưa có giỏ hàng, mã giảm giá, hoàn tiền, chứng chỉ, bài tập tự chấm, phân trang đơn hàng/tài khoản hoặc giảng viên tự quản trị. Signed video không phải DRM; URL MP4 bên ngoài phụ thuộc quyền truy cập của nơi lưu trữ.

@@ -23,7 +23,9 @@ public class AdminController {
     private final OrderService orders;
 
     @GetMapping("/courses")
-    public Object catalog() {
+    public Object catalog(@RequestParam(required = false) Integer page,
+                          @RequestParam(defaultValue = "12") int size) {
+        if (page != null) return courses.catalogPage("", null, true, page, size);
         return courses.catalog("", null, true);
     }
 

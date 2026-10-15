@@ -1175,3 +1175,33 @@ footer > span {
 .resume-video-actions button {
     flex: 1 1 180px;
 }
+
+.pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 28px;
+}
+
+.pagination-wrap p {
+    margin: 0;
+}
+
+.pagination,
+.pagination-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pagination button {
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.pagination [aria-current="page"] {
+    font-weight: 700;
+}

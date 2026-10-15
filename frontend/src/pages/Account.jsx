@@ -1,10 +1,10 @@
 import {useState, useEffect} from "react";
-import {Link} from "react-router-dom";
+import {Link, useNavigate, useSearchParams} from "react-router-dom";
 import api, {errorMessage} from "../api";
 import {Notice, Status} from "../ui";
 import {useLoad, money, date} from "../helpers";
 
-export function OrderTable({orders, admin, checkout, busy}) {
+export function OrderTable({orders, admin, checkout, reconcile, busy}) {
     return (
         <div className="table-wrap">
             <table>
@@ -36,13 +36,15 @@ export function OrderTable({orders, admin, checkout, busy}) {
                 <span
                     className={"badge " + (o.status === "PAID" ? "paid" : "")}
                 >
-                  {o.status === "PAID" ? "Đã thanh toán" : "Chờ thanh toán"}
+                  {o.status === "PAID" ? "Đã thanh toán" : o.status === "CANCELLED"
+                      ? "Đã hủy" : o.status === "EXPIRED" ? "Đã hết hạn" : "Chờ thanh toán"}
                 </span>
                         </td>
                         <td>{date(o.createdAt)}</td>
                         {!admin && (
                             <td>
                                 {o.status === "PENDING" ? (
+                                    <>
                                     <button
                                         className="small"
                                         disabled={busy === o.id}
@@ -50,9 +52,14 @@ export function OrderTable({orders, admin, checkout, busy}) {
                                     >
                                         {busy === o.id ? "Đang xử lý…" : "Thanh toán ↗"}
                                     </button>
-                                ) : (
+                                    {o.checkoutUrl && <button className="small secondary"
+                                        disabled={busy === o.id} onClick={() => reconcile(o.id)}>
+                                        Kiểm tra thanh toán
+                                    </button>}
+                                    </>
+                                ) : o.status === "PAID" ? (
                                     <Link to={"/learn/" + o.items[0]?.courseId}>Vào học →</Link>
-                                )}
+                                ) : <Link to={"/courses/" + o.items[0]?.courseId}>Đăng ký lại</Link>}
                             </td>
                         )}
                     </tr>
@@ -65,9 +72,27 @@ export function OrderTable({orders, admin, checkout, busy}) {
 }
 
 export function Orders() {
-    const req = useLoad(() => api.get("/api/orders"));
+    const navigate = useNavigate();
+    const [params] = useSearchParams();
+    const selectedId = params.get("order");
     const [error, setError] = useState("");
+    const [verificationError, setVerificationError] = useState("");
     const [busy, setBusy] = useState(null);
+    const req = useLoad(async () => {
+        const response = await api.get("/api/orders");
+        const selected = response.data.find(o => String(o.id) === selectedId);
+        if (selected?.status === "PENDING" && selected.checkoutUrl) {
+            try {
+                const {data} = await api.post("/api/orders/" + selected.id + "/reconcile");
+                response.data = response.data.map(o => o.id === data.id ? data : o);
+                setVerificationError("");
+            } catch (e) {
+                setVerificationError(errorMessage(e));
+            }
+        }
+        return response;
+    }, [selectedId]);
+    const selected = req.data?.find(o => String(o.id) === selectedId);
     useEffect(() => {
         const t = setInterval(req.refresh, 10000);
         return () => clearInterval(t);
@@ -78,9 +103,31 @@ export function Orders() {
         setError("");
         try {
             const {data} = await api.post("/api/orders/" + id + "/checkout");
-            window.location.assign(data.checkoutUrl);
+            if (data.status === "PAID") {
+                navigate("/learn/" + data.items[0].courseId);
+            } else if (data.status !== "PENDING") {
+                setError("Đơn hàng đã hủy hoặc hết hạn. Vui lòng đăng ký lại khóa học.");
+                req.refresh();
+            } else {
+                window.location.assign(data.checkoutUrl);
+            }
         } catch (e) {
             setError(errorMessage(e));
+        } finally {
+            setBusy(null);
+        }
+    }
+
+    async function reconcile(id) {
+        setBusy(id);
+        setError("");
+        try {
+            await api.post("/api/orders/" + id + "/reconcile");
+            setVerificationError("");
+            req.refresh();
+        } catch (e) {
+            setError(errorMessage(e));
+        } finally {
             setBusy(null);
         }
     }
@@ -101,9 +148,19 @@ export function Orders() {
                 tập.
             </p>
             <Notice>{error}</Notice>
+            <Notice>{verificationError}</Notice>
+            {selected?.status === "PAID" && <div className="panel">
+                <Notice success>Đã xác nhận thanh toán đơn #{selected.id}. Khóa học đã được thêm vào Học tập.</Notice>
+                <Link className="button" to={"/learn/" + selected.items[0]?.courseId}>Vào học ngay →</Link>
+                <Link className="button secondary" to="/my-courses">Học tập</Link>
+            </div>}
+            {selected?.status === "PENDING" && <p role="status">
+                Đơn #{selected.id} đang chờ xác nhận. Hệ thống kiểm tra lại mỗi 10 giây;
+                nếu bạn đã chuyển khoản, hãy chọn “Kiểm tra thanh toán”.
+            </p>}
             <Status request={req}>
                 {req.data && (
-                    <OrderTable orders={req.data} checkout={checkout} busy={busy}/>
+                    <OrderTable orders={req.data} checkout={checkout} reconcile={reconcile} busy={busy}/>
                 )}
             </Status>
         </section>

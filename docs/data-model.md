@@ -23,7 +23,7 @@ erDiagram
 | course_sections | Chương và thứ tự trong khóa |
 | lessons | Bài, nội dung, URL video, thời lượng, preview; ID upload/asset/playback và trạng thái Mux |
 | enrollments | Quyền học; cặp user/course duy nhất |
-| orders | Chủ đơn, tổng tiền, trạng thái PENDING/PAID, thời điểm tạo/thanh toán |
+| orders | Chủ đơn, tổng tiền, trạng thái PENDING/PAID/CANCELLED/EXPIRED, thời điểm tạo/thanh toán |
 | order_items | Snapshot tên và giá tại lúc mua, liên kết khóa học |
 | payments | Kết quả thanh toán; order và external reference chống trùng |
 | lesson_progress | Cặp user/lesson duy nhất; completed, vị trí, thời lượng, thời điểm checkpoint |

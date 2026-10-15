@@ -1,6 +1,7 @@
 package com.codepath.academy.security;
 
 import java.util.*;
+import java.net.URI;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,9 @@ public class SecurityConfig {
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
+
+    @Value("${app.cors.allowed-origins:}")
+    private String additionalCorsOrigins = "";
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -74,7 +78,12 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of(frontendUrl));
+        Set<String> origins = new LinkedHashSet<>(frontendOrigins());
+        Arrays.stream(additionalCorsOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .forEach(origins::add);
+        c.setAllowedOrigins(new ArrayList<>(origins));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         c.setAllowedHeaders(
                 List.of("Authorization", "Content-Type", "Accept-Language")
@@ -82,5 +91,16 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
         s.registerCorsConfiguration("/**", c);
         return s;
+    }
+
+    private List<String> frontendOrigins() {
+        URI origin = URI.create(frontendUrl);
+        String host = origin.getHost();
+        if (!"localhost".equalsIgnoreCase(host) && !"127.0.0.1".equals(host)) {
+            return List.of(frontendUrl);
+        }
+        String alias = "localhost".equalsIgnoreCase(host) ? "127.0.0.1" : "localhost";
+        String port = origin.getPort() == -1 ? "" : ":" + origin.getPort();
+        return List.of(frontendUrl, origin.getScheme() + "://" + alias + port);
     }
 }

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
+export const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 const api = axios.create({baseURL: apiBase});
 let refreshPromise;
 

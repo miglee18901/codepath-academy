@@ -10,6 +10,8 @@ import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -112,6 +114,19 @@ public class CourseService {
                 "durationMinutes",
                 ls.stream().mapToInt(Lesson::getDurationMinutes).sum()
         );
+    }
+
+    public Map<String, Object> catalogPage(String query, Long categoryId, boolean all, int page, int size) {
+        if (page < 0 || size < 1 || size > 48)
+            throw new IllegalArgumentException("Trang phải từ 0; số khóa học mỗi trang từ 1 đến 48.");
+        String q = Objects.toString(query, "").strip().toLowerCase(Locale.ROOT);
+        String pattern = "%" + q.replace("!", "!!").replace("%", "!%")
+                .replace("_", "!_") + "%";
+        var result = courses.searchCatalog(all, categoryId, pattern,
+                PageRequest.of(page, size, Sort.by("id").descending()));
+        return view("content", result.getContent().stream().map(this::card).toList(),
+                "page", result.getNumber(), "size", result.getSize(),
+                "totalElements", result.getTotalElements(), "totalPages", result.getTotalPages());
     }
 
     public List<Lesson> courseLessons(Long courseId) {

@@ -1,23 +1,52 @@
 import {useEffect, useState} from "react";
-import {Link, useNavigate, useParams} from "react-router-dom";
+import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import api, {errorMessage} from "../api";
-import {Notice, Status, CourseCard, Curriculum} from "../ui";
+import {Notice, Status, CourseCard, Curriculum, Pagination} from "../ui";
 import {useLoad, money, categoryColor} from "../helpers";
 import {DirectLessonVideo, MuxLessonVideo} from "../components/MuxVideo";
 import {localResumeLesson} from "../components/useVideoProgress";
 
 export function Catalog() {
-    const [q, setQ] = useState("");
-    const [search, setSearch] = useState("");
-    const [category, setCategory] = useState("");
+    const [params, setParams] = useSearchParams();
+    const search = params.get("q") || "";
+    const category = params.get("categoryId") || "";
+    const requestedPage = Number(params.get("page") || 1);
+    const page = Number.isInteger(requestedPage) && requestedPage > 0 && requestedPage <= 2147483647
+        ? requestedPage - 1 : 0;
+    const [q, setQ] = useState(search);
+    useEffect(() => setQ(search), [search]);
     const categories = useLoad(() => api.get("/api/categories"));
     const req = useLoad(
         () =>
             api.get("/api/courses", {
-                params: {q: search, categoryId: category || undefined},
+                params: {q: search, categoryId: category || undefined, page, size: 12},
             }),
-        [search, category],
+        [search, category, page],
     );
+    function filter(key, value) {
+        const next = new URLSearchParams(params);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        next.delete("page");
+        setParams(next);
+    }
+    function changePage(index) {
+        const next = new URLSearchParams(params);
+        if (index === 0) next.delete("page");
+        else next.set("page", String(index + 1));
+        setParams(next);
+        document.getElementById("catalog")?.scrollIntoView({behavior: "smooth"});
+    }
+    useEffect(() => {
+        if (req.loading || !req.data || req.data.page !== page) return;
+        const last = Math.max(0, req.data.totalPages - 1);
+        if (page > last) {
+            const next = new URLSearchParams(params);
+            if (last === 0) next.delete("page");
+            else next.set("page", String(last + 1));
+            setParams(next, {replace: true});
+        }
+    }, [req.loading, req.data, page, params, setParams]);
     return (
         <>
             <section className="hero">
@@ -80,7 +109,7 @@ export function Catalog() {
                         className="search"
                         onSubmit={(e) => {
                             e.preventDefault();
-                            setSearch(q);
+                            filter("q", q.trim());
                         }}
                     >
                         <input
@@ -95,7 +124,7 @@ export function Catalog() {
                 <div className="filters">
                     <button
                         className={!category ? "active" : ""}
-                        onClick={() => setCategory("")}
+                        onClick={() => filter("categoryId", "")}
                     >
                         Tất cả khóa học
                     </button>
@@ -103,7 +132,7 @@ export function Catalog() {
                         <button
                             key={c.id}
                             className={category === String(c.id) ? "active" : ""}
-                            onClick={() => setCategory(String(c.id))}
+                            onClick={() => filter("categoryId", String(c.id))}
                         >
                             {c.name}
                         </button>
@@ -111,12 +140,13 @@ export function Catalog() {
                 </div>
                 <Notice>{categories.error}</Notice>
                 <Status request={req}>
-                    <div className="course-grid">
-                        {req.data?.map((c) => (
+                    <div className="course-grid" aria-busy={req.loading}>
+                        {req.data?.content.map((c) => (
                             <CourseCard key={c.id} course={c}/>
                         ))}
                     </div>
-                    {req.data?.length === 0 && (
+                    <Pagination data={req.data} onChange={changePage} loading={req.loading}/>
+                    {req.data?.totalElements === 0 && (
                         <div className="empty">
                             Chưa có khóa học phù hợp. Hãy thử từ khóa hoặc danh mục khác.
                         </div>
@@ -150,7 +180,11 @@ export function CourseDetail() {
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const req = useLoad(() => api.get("/api/courses/" + id), [id]);
+    const purchases = useLoad(() => localStorage.getItem("token")
+        ? api.get("/api/orders") : Promise.resolve({data: []}), [id]);
     const c = req.data;
+    const pending = purchases.data?.find(o => o.status === "PENDING"
+        && o.items.some(item => String(item.courseId) === String(id)));
 
     async function buy() {
         if (!localStorage.getItem("token")) {
@@ -204,8 +238,15 @@ export function CourseDetail() {
                                     <Link className="button full" to={"/learn/" + id}>
                                         Vào học ngay →
                                     </Link>
+                                ) : pending ? (
+                                    <>
+                                        <p>Bạn đã tạo đơn #{pending.id}, đang chờ xác nhận thanh toán.</p>
+                                        <Link className="button full" to={"/orders?order=" + pending.id}>
+                                            Kiểm tra đơn / Tiếp tục thanh toán
+                                        </Link>
+                                    </>
                                 ) : (
-                                    <button className="full" disabled={busy} onClick={buy}>
+                                    <button className="full" disabled={busy || purchases.loading} onClick={buy}>
                                         {busy
                                             ? "Đang tạo đơn…"
                                             : Number(c.price) === 0

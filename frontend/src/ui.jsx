@@ -37,6 +37,31 @@ export function Guard({admin = false, children}) {
     return children;
 }
 
+export function Pagination({data, onChange, loading = false}) {
+    if (!data || data.totalElements === 0) return null;
+    const {page, size, totalElements, totalPages} = data;
+    const pages = totalPages <= 7 ? Array.from({length: totalPages}, (_, i) => i)
+        : [...new Set([0, page - 1, page, page + 1, totalPages - 1])]
+            .filter(i => i >= 0 && i < totalPages).sort((a, b) => a - b);
+    return <div className="pagination-wrap">
+        <p className="muted" role="status">
+            Hiển thị {Math.min(page * size + 1, totalElements)}–{Math.min((page + 1) * size, totalElements)} / {totalElements} khóa học
+        </p>
+        {totalPages > 1 && <nav className="pagination" aria-label="Phân trang khóa học">
+            <button className="secondary small" disabled={loading || page === 0}
+                    onClick={() => onChange(page - 1)} aria-label="Trang trước">← Trước</button>
+            {pages.map((index, i) => <span className="pagination-item" key={index}>
+                {i > 0 && index > pages[i - 1] + 1 && <span aria-hidden="true">…</span>}
+                <button className={(index === page ? "" : "secondary ") + "small"}
+                        aria-label={"Trang " + (index + 1)} aria-current={index === page ? "page" : undefined}
+                        disabled={loading} onClick={() => onChange(index)}>{index + 1}</button>
+            </span>)}
+            <button className="secondary small" disabled={loading || page >= totalPages - 1}
+                    onClick={() => onChange(page + 1)} aria-label="Trang sau">Sau →</button>
+        </nav>}
+    </div>;
+}
+
 export function CourseCard({course: c, owned = false}) {
     const style = categoryColor(c);
     return (

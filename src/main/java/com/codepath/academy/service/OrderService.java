@@ -15,6 +15,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.payos.model.webhooks.Webhook;
+import vn.payos.model.v2.paymentRequests.PaymentLink;
+import vn.payos.model.v2.paymentRequests.PaymentLinkStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -101,13 +103,40 @@ public class OrderService {
         if (!o.getUserId().equals(user.getId())) throw new AccessDeniedException(
                 "Đơn hàng không thuộc tài khoản"
         );
-        if (!"PENDING".equals(o.getStatus())) throw new IllegalStateException(
-                "Đơn hàng đã thanh toán"
-        );
+        reconcilePayment(o);
+        if (!"PENDING".equals(o.getStatus())) return orderView(o);
         if (o.getCheckoutUrl() == null) o.setCheckoutUrl(
                 gateway.checkout(o, items.findByOrderId(id))
         );
-        return view("checkoutUrl", o.getCheckoutUrl());
+        return orderView(o);
+    }
+
+    @Transactional
+    public Map<String, Object> reconcile(Long id, User user) {
+        CourseOrder order = orders.lockById(id).orElseThrow(CourseService::missing);
+        if (!order.getUserId().equals(user.getId()) && !courses.admin(user))
+            throw new AccessDeniedException("Đơn hàng không thuộc tài khoản");
+        reconcilePayment(order);
+        return orderView(order);
+    }
+
+    // Only the authenticated PayOS API can confirm a missing webhook; browser return parameters cannot.
+    private void reconcilePayment(CourseOrder order) {
+        if (!"PENDING".equals(order.getStatus()) || order.getCheckoutUrl() == null) return;
+        PaymentLink payment = gateway.payment(order.getId());
+        if (!order.getId().equals(payment.getOrderCode()) || payment.getAmount() == null
+                || order.getTotal().compareTo(BigDecimal.valueOf(payment.getAmount())) != 0)
+            throw new IllegalArgumentException("Thông tin thanh toán không khớp đơn hàng");
+        if (payment.getStatus() == PaymentLinkStatus.PAID) {
+            if (payment.getAmountPaid() == null || payment.getAmountRemaining() == null
+                    || payment.getAmountRemaining() != 0L
+                    || order.getTotal().compareTo(BigDecimal.valueOf(payment.getAmountPaid())) != 0)
+                throw new IllegalArgumentException("Số tiền thanh toán không khớp đơn hàng");
+            settle(order, BigDecimal.valueOf(payment.getAmountPaid()), "PAYOS-" + order.getId());
+        } else if (payment.getStatus() == PaymentLinkStatus.CANCELLED
+                || payment.getStatus() == PaymentLinkStatus.EXPIRED) {
+            order.setStatus(payment.getStatus().name());
+        }
     }
 
     @Transactional

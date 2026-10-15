@@ -71,4 +71,13 @@ public class PayOsGateway {
             );
         }
     }
+
+    public PaymentLink payment(Long orderId) {
+        try {
+            return payOS.paymentRequests().get(orderId);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Chưa kiểm tra được thanh toán với PayOS. Vui lòng thử lại.");
+        }
+    }
 }

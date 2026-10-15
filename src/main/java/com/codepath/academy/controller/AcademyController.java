@@ -28,8 +28,11 @@ public class AcademyController {
     @GetMapping("/courses")
     public Object catalog(
             @RequestParam(defaultValue = "") String q,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(defaultValue = "12") int size
     ) {
+        if (page != null) return courses.catalogPage(q, categoryId, false, page, size);
         return courses.catalog(q, categoryId, false);
     }
 
@@ -112,5 +115,10 @@ public class AcademyController {
     public Object webhook(@RequestBody Webhook webhook) {
         orders.webhook(webhook);
         return Map.of("message", "success");
+    }
+
+    @PostMapping("/orders/{id}/reconcile")
+    public Object reconcile(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        return orders.reconcile(id, user);
     }
 }
