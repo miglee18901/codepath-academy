@@ -8,10 +8,13 @@ import com.example.java_basic.dto.RegisterRequestDTO;
 import jakarta.validation.Valid;
 
 public interface AuthService {
-  void initiateRegistration(RegisterRequestDTO request);
-  void verifyRegistration(OtpVerifyRequestDTO request);
-  AuthResponseDTO login(LoginRequestDTO request);
-  AuthResponseDTO refreshToken(RefreshTokenRequestDTO request);
+    void initiateRegistration(RegisterRequestDTO request);
 
-  void resendOTP(@Valid String email);
+    void verifyRegistration(OtpVerifyRequestDTO request);
+
+    AuthResponseDTO login(LoginRequestDTO request);
+
+    AuthResponseDTO refreshToken(RefreshTokenRequestDTO request);
+
+    void resendOTP(@Valid String email);
 }

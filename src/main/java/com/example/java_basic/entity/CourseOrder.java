@@ -10,24 +10,24 @@ import lombok.*;
 @NoArgsConstructor
 public class CourseOrder {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(nullable = false)
-  private Long userId;
+    @Column(nullable = false)
+    private Long userId;
 
-  @Column(nullable = false, precision = 12, scale = 0)
-  private java.math.BigDecimal total;
+    @Column(nullable = false, precision = 12, scale = 0)
+    private java.math.BigDecimal total;
 
-  @Column(nullable = false, length = 20)
-  private String status;
+    @Column(nullable = false, length = 20)
+    private String status;
 
-  @Column(length = 1000)
-  private String checkoutUrl;
+    @Column(length = 1000)
+    private String checkoutUrl;
 
-  @Column(nullable = false)
-  private java.time.LocalDateTime createdAt;
+    @Column(nullable = false)
+    private java.time.LocalDateTime createdAt;
 
-  private java.time.LocalDateTime paidAt;
+    private java.time.LocalDateTime paidAt;
 }

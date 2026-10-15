@@ -11,7 +11,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u\"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      test: [ "CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u\"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1" ]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -19,11 +19,11 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -52,13 +52,17 @@ services:
       APP_MAILFROM: ${MAIL_FROM:-no-reply@codepath.local}
       APP_DEMODATA: ${DEMO_DATA:-true}
       APP_FRONTENDURL: http://localhost:5173
+      MUX_TOKEN_ID: ${MUX_TOKEN_ID:-}
+      MUX_TOKEN_SECRET: ${MUX_TOKEN_SECRET:-}
+      MUX_SIGNING_KEY_ID: ${MUX_SIGNING_KEY_ID:-}
+      MUX_SIGNING_PRIVATE_KEY: ${MUX_SIGNING_PRIVATE_KEY:-}
       JWT_SECRET: ${JWT_SECRET:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
       CLIENT_ID: ${PAYOS_CLIENT_ID:-local-placeholder}
       API_KEY: ${PAYOS_API_KEY:-local-placeholder}
       CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:-local-placeholder}
       GOOGLE_RECAPTCHA_SECRETKEY: ${RECAPTCHA_SECRET_KEY:-6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/categories || exit 1"]
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/categories || exit 1" ]
       interval: 5s
       timeout: 5s
       retries: 20

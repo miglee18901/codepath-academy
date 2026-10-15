@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mux/mux-player-react": "^3.14.0",
+    "@mux/upchunk": "^3.5.0",
     "axios": "^1.19.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
