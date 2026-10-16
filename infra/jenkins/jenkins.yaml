@@ -1,0 +1,18 @@
+jenkins:
+  systemMessage: "Shared Jenkins — local Docker pipelines for trusted repositories"
+  numExecutors: 2
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${jenkins_admin_password}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+unclassified:
+  location:
+    url: "${JENKINS_URL}"
+jobs:
+  - file: /usr/share/jenkins/config/jobs.groovy

@@ -1,0 +1,39 @@
+name: ${JENKINS_COMPOSE_PROJECT:-shared-jenkins}
+
+services:
+  jenkins:
+    build: .
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${JENKINS_BIND_ADDRESS:-127.0.0.1}:${JENKINS_HTTP_PORT:-8090}:8080"
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true
+      JENKINS_URL: ${JENKINS_URL:-http://localhost:8090/}
+      JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
+      SEED_JOB_NAME: ${SEED_JOB_NAME:-codepath-academy}
+      SEED_REPO_URL: ${SEED_REPO_URL:-https://github.com/miglee18901/codepath-academy.git}
+      SEED_REPO_BRANCH: ${SEED_REPO_BRANCH:-main}
+      SEED_CREDENTIALS_ID: ${SEED_CREDENTIALS_ID:-}
+      SEED_SCRIPT_PATH: ${SEED_SCRIPT_PATH:-Jenkinsfile}
+    group_add:
+      - "${DOCKER_GID:-0}"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - jenkins_admin_password
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS http://localhost:8080/login >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 30
+    stop_grace_period: 60s
+
+volumes:
+  jenkins_home:
+
+secrets:
+  jenkins_admin_password:
+    file: ./secrets/admin-password.txt

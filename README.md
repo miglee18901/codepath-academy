@@ -75,6 +75,12 @@ Danh mục đầy đủ: [docs/README.md](docs/README.md). Mỗi luồng có m�
 
 Bắt đầu với [đăng ký OTP](docs/02-registration-otp.md), [thanh toán](docs/09-paid-checkout.md), [webhook và cấp quyền](docs/10-payment-webhook.md), [phát video](docs/13-video-playback.md), [popup xem tiếp](docs/14-resume-confirmation.md).
 
+## Jenkins CI/CD
+
+Bộ Jenkins Docker dùng chung nằm tại [`infra/jenkins`](infra/jenkins/README.md), tách khỏi Compose của ứng dụng. Chạy `powershell -NoProfile -File infra/jenkins/setup.ps1`, rồi `docker compose -f infra/jenkins/compose.yaml up -d --build --wait`; truy cập http://localhost:8090.
+
+[`Jenkinsfile`](Jenkinsfile) chạy test backend, lint/build frontend và đóng gói Docker image. Tham số `DEPLOY_STAGING` bật triển khai staging riêng tại http://localhost:15173. Commit/push cấu hình lên repository trước khi chạy job lấy pipeline từ Git. Xem hướng dẫn về tài khoản, webhook, credential và thêm dự án khác trong tài liệu Jenkins.
+
 ## Kiểm thử
 
 ```powershell

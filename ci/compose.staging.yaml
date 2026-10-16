@@ -1,0 +1,20 @@
+# Requires Docker Compose >= 2.24.4 (!override).
+name: codepath-academy-staging
+services:
+  backend:
+    image: codepath-academy-backend:${IMAGE_TAG:?IMAGE_TAG must identify a verified build}
+    ports: !override
+      - "127.0.0.1:18080:8080"
+  frontend:
+    image: codepath-academy-frontend:${IMAGE_TAG:?IMAGE_TAG must identify a verified build}
+    ports: !override
+      - "127.0.0.1:15173:5173"
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -O /dev/null http://127.0.0.1:5173/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+  mailpit:
+    ports: !override
+      - "127.0.0.1:18025:8025"

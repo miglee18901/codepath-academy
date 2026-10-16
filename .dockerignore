@@ -11,3 +11,6 @@ src/main/resources/application.properties
 .qa
 artifacts
 scripts
+infra
+ci
+Jenkinsfile
