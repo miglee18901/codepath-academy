@@ -3,6 +3,8 @@ import {Link, useNavigate, useSearchParams} from "react-router-dom";
 import api, {errorMessage} from "../api";
 import {Notice, Status} from "../ui";
 import {useLoad, money, date} from "../helpers";
+import PasskeySettings from "../PasskeySettings";
+import SocialAccountSettings from "../SocialAccountSettings";
 
 export function OrderTable({orders, admin, checkout, reconcile, busy}) {
     return (
@@ -197,6 +199,12 @@ export function Profile() {
                     </div>
                 )}
             </Status>
+            {req.data && <>
+                <SocialAccountSettings hasPassword={req.data.passwordLoginEnabled !== false} onPasswordSet={req.refresh}/>
+                {req.data.passwordLoginEnabled !== false ? <PasskeySettings/> : <div className="panel">
+                    <h2>Passkeys</h2><p>Thiết lập mật khẩu ở trên để thêm và quản lý Passkeys.</p>
+                </div>}
+            </>}
         </section>
     );
 }

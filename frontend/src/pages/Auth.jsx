@@ -1,8 +1,11 @@
 import {useState, useEffect} from "react";
 import {Link, useNavigate, useLocation} from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
-import api, {errorMessage} from "../api";
+import api, {errorMessage, saveSession} from "../api";
+import SocialLoginButtons from "../SocialLoginButtons";
+import {safeNext} from "../socialAuth";
 import {Notice} from "../ui";
+import {loginWithPasskey, supportsPasskeys, passkeyError} from "../passkeys";
 
 export default function Auth({register = false}) {
     const navigate = useNavigate();
@@ -73,6 +76,21 @@ export default function Auth({register = false}) {
         );
     }
 
+    function completeLogin(data) {
+        saveSession(data);
+        const next = new URLSearchParams(location.search).get("next");
+        navigate(safeNext(next));
+    }
+
+    async function passkeyLogin() {
+        setBusy(true);
+        setError("");
+        setMessage("");
+        try { completeLogin(await loginWithPasskey()); }
+        catch (e) { setError(passkeyError(e)); }
+        finally { setBusy(false); }
+    }
+
     async function submit(e) {
         e.preventDefault();
         setBusy(true);
@@ -84,15 +102,7 @@ export default function Auth({register = false}) {
                     username: form.username,
                     password: form.password,
                 });
-                localStorage.setItem("token", data.token);
-                localStorage.setItem("refreshToken", data.refreshToken);
-                localStorage.setItem("user", JSON.stringify(data));
-                const next = new URLSearchParams(location.search).get("next");
-                navigate(
-                    next?.startsWith("/") && !next.startsWith("//")
-                        ? next
-                        : "/my-courses",
-                );
+                completeLogin(data);
             } else if (step === 1) {
                 await api.post("/api/auth/register/init", {
                     ...form,
@@ -215,6 +225,15 @@ export default function Auth({register = false}) {
                                 : "Đăng nhập →"}
                     </button>
                 </form>
+                {(!register || step === 1) && <SocialLoginButtons disabled={busy}
+                    next={new URLSearchParams(location.search).get("next")}/>}
+                {!register && <>
+                    <button type="button" className="full secondary" disabled={busy || !supportsPasskeys()}
+                            onClick={passkeyLogin}>Đăng nhập bằng Passkey</button>
+                    <p className="muted">{supportsPasskeys()
+                        ? "Thêm Passkey trong Hồ sơ cá nhân sau khi đăng nhập."
+                        : "Passkeys cần trình duyệt hỗ trợ và kết nối HTTPS hoặc localhost."}</p>
+                </>}
                 {register && step === 2 && (
                     <button
                         className="ghost"

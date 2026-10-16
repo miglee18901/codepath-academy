@@ -8,6 +8,12 @@ export function clearSession() {
     ["token", "refreshToken", "user"].forEach((k) => localStorage.removeItem(k));
 }
 
+export function saveSession(data) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem("user", JSON.stringify(data));
+}
+
 export function session() {
     try {
         return JSON.parse(localStorage.getItem("user") || "null");

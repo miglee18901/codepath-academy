@@ -47,6 +47,12 @@ Dữ liệu và tài khoản trên dành cho trải nghiệm local. Bổ sung 24
 
 ## Cấu hình
 
+Google/GitHub: thêm OAuth Client ID/Secret vào `.env`, rồi restart backend.
+Xem [hướng dẫn tạo OAuth App và liên kết tài khoản](docs/social-login.md).
+
+Passkeys: đăng nhập rồi vào **Hồ sơ cá nhân → Passkeys** để thêm/xóa; trang đăng
+nhập có nút **Đăng nhập bằng Passkey**. Xem [cấu hình và kiểm thử Passkeys](docs/passkeys.md).
+
 Lần đầu cần tùy chỉnh, copy `.env.example` thành `.env`; nếu đã có `.env`, cập nhật từng biến cần thiết. Sau thay đổi, chạy lại `docker compose up -d` để container nhận environment mới.
 
 - Mailpit nhận email local; gửi email thật cần cấu hình SMTP.

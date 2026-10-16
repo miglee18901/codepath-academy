@@ -758,6 +758,51 @@ footer > span {
     gap: 17px;
 }
 
+.auth-panel > button.full {
+    margin-top: 16px;
+}
+
+.social-login {
+    margin-top: 24px;
+}
+
+.social-divider {
+    text-align: center;
+}
+
+.social-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.social-buttons > button {
+    flex: 1;
+    min-width: 110px;
+}
+
+.social-settings form {
+    display: grid;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.social-settings .profile-row {
+    overflow-wrap: anywhere;
+}
+
+.passkey-settings form {
+    display: grid;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.passkey-settings .profile-row > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .auth-panel h2 {
     font-size: 25px;
 }

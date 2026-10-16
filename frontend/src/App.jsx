@@ -12,6 +12,7 @@ import {clearSession, session} from "./api";
 import {Guard} from "./ui";
 import {Catalog, CourseDetail, Learn, Library} from "./pages/Courses";
 import {Orders, Profile} from "./pages/Account";
+import OAuthCallback from "./pages/OAuthCallback";
 import Auth from "./pages/Auth";
 import {Admin, CourseEditor} from "./pages/Admin";
 import "./App.css";
@@ -76,6 +77,7 @@ function Layout() {
                     <Route path="/courses/:id" element={<CourseDetail/>}/>
                     <Route path="/learn/:courseId/:lessonId?" element={<Learn/>}/>
                     <Route path="/login" element={<Auth/>}/>
+                    <Route path="/oauth/callback" element={<OAuthCallback/>}/>
                     <Route path="/register" element={<Auth register/>}/>
                     <Route
                         path="/my-courses"

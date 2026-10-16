@@ -7,7 +7,6 @@ import com.codepath.academy.dto.*;
 import com.codepath.academy.entity.User;
 import com.codepath.academy.enums.Role;
 import com.codepath.academy.repository.UserRepository;
-import com.codepath.academy.security.JwtService;
 import com.codepath.academy.service.impl.AuthServiceImpl;
 
 import java.time.LocalDateTime;
@@ -19,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,12 +33,6 @@ class AuthServiceTest {
     AuthenticationManager authenticationManager;
 
     @Mock
-    JwtService jwtService;
-
-    @Mock
-    UserDetailsService userDetailsService;
-
-    @Mock
     EmailService emailService;
 
     @Mock
@@ -53,10 +45,26 @@ class AuthServiceTest {
     CaptchaService captchaService;
 
     @Mock
+    LoginTokenService loginTokenService;
+
+    @Mock
     Cache cache;
 
     @InjectMocks
     AuthServiceImpl service;
+
+    @Test
+    void passwordLoginStillAuthenticatesBeforeIssuingTokens() {
+        LoginRequestDTO request = new LoginRequestDTO();
+        request.setUsername("learner");
+        request.setPassword("correct");
+        AuthResponseDTO response = AuthResponseDTO.builder().token("jwt").build();
+        when(loginTokenService.issue("learner")).thenReturn(response);
+        assertSame(response, service.login(request));
+        var order = inOrder(authenticationManager, loginTokenService);
+        order.verify(authenticationManager).authenticate(any());
+        order.verify(loginTokenService).issue("learner");
+    }
 
     @Test
     void registrationCannotBypassCaptchaOrOtp() {

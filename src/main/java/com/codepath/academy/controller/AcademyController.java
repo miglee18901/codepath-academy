@@ -63,6 +63,8 @@ public class AcademyController {
                 user.getFullName(),
                 "email",
                 user.getEmail(),
+                "passwordLoginEnabled",
+                user.isPasswordLoginEnabled(),
                 "role",
                 user.getRole()
         );

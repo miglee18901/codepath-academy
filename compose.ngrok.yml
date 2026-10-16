@@ -3,6 +3,7 @@ services:
   backend:
     environment:
       APP_FRONTENDURL: https://${NGROK_DOMAIN:?Set NGROK_DOMAIN in .env without https or a path}
+      OAUTH_COOKIE_SECURE: "true"
       APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
   frontend:
     environment:

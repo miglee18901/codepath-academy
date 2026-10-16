@@ -35,6 +35,13 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean passwordLoginEnabled = true;
+
+    @Column(unique = true, length = 64)
+    private String passkeyHandle;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;

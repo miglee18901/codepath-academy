@@ -4,20 +4,15 @@ import com.codepath.academy.dto.*;
 import com.codepath.academy.entity.User;
 import com.codepath.academy.enums.Role;
 import com.codepath.academy.repository.UserRepository;
-import com.codepath.academy.security.JwtService;
 import com.codepath.academy.service.*;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,16 +24,12 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    private final LoginTokenService loginTokenService;
     private final EmailService emailService;
     private final CacheManager cacheManager;
     private final StringRedisTemplate redisTemplate;
     private final CaptchaService captchaService;
     private final SecureRandom random = new SecureRandom();
-
-    @Value("${jwt.refresh.expiration:604800000}")
-    private long refreshExpiration;
 
     private Cache cache() {
         Cache c = cacheManager.getCache("otpCache");
@@ -138,7 +129,7 @@ public class AuthServiceImpl implements AuthService {
                         request.getPassword()
                 )
         );
-        return tokens(request.getUsername());
+        return loginTokenService.issue(request.getUsername());
     }
 
     @Override
@@ -149,27 +140,6 @@ public class AuthServiceImpl implements AuthService {
         if (username == null) throw new BadCredentialsException(
                 "Refresh token hết hạn"
         );
-        return tokens(username);
-    }
-
-    private AuthResponseDTO tokens(String username) {
-        UserDetails details = userDetailsService.loadUserByUsername(username);
-        User user = userRepository.findByUsername(username).orElseThrow();
-        String refresh = UUID.randomUUID().toString();
-        redisTemplate
-                .opsForValue()
-                .set(
-                        "refresh:" + refresh,
-                        username,
-                        refreshExpiration,
-                        TimeUnit.MILLISECONDS
-                );
-        return AuthResponseDTO.builder()
-                .token(jwtService.generateToken(details))
-                .refreshToken(refresh)
-                .id(user.getId())
-                .username(username)
-                .role("ROLE_" + user.getRole().name())
-                .build();
+        return loginTokenService.issue(username);
     }
 }
