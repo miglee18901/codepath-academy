@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+scrape_configs:
+  - job_name: codepath-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [codepath-backend-local:9091]
+        labels:
+          deployment: local
+      # Enable once staging is connected to the shared network:
+      # - targets: [codepath-backend-staging:9091]
+      #   labels:
+      #     deployment: staging
+  - job_name: otel-collector
+    static_configs:
+      - targets: [otel-collector:8888]
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]
+  - job_name: loki
+    static_configs:
+      - targets: [loki:3100]
+  - job_name: tempo
+    static_configs:
+      - targets: [tempo:3200]

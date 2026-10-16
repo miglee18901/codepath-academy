@@ -73,3 +73,29 @@ server:
         http-only: true
         same-site: lax
         secure: ${OAUTH_COOKIE_SECURE:false}
+
+# Docker-only management port; never published or proxied by the frontend.
+management:
+  server:
+    port: 9091
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: codepath-academy-backend
+      environment: ${DEPLOYMENT_ENVIRONMENT:local}
+      version: ${APP_VERSION:local}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  tracing:
+    enabled: false
+
+logging:
+  pattern:
+    level: '%5p [trace_id=%X{trace_id:-} span_id=%X{span_id:-}]'

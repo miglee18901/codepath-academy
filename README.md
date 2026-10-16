@@ -89,6 +89,8 @@ Bộ Jenkins Docker dùng chung nằm tại [`infra/jenkins`](infra/jenkins/READ
 
 ## Kiểm thử
 
+Giám sát Docker bằng OpenTelemetry, Prometheus, Loki, Tempo và Grafana: xem [`infra/observability/README.md`](infra/observability/README.md). Chạy `powershell -NoProfile -ExecutionPolicy Bypass -File infra/observability/setup.ps1`; Grafana tại http://localhost:3000, hộp thư cảnh báo local tại http://localhost:18026. Dashboard/rule cảnh báo được quản lý trong Git; mật khẩu nằm trong file `.env` được bỏ qua.
+
 ```powershell
 docker build --target test -t codepath-academy-tests .
 docker compose exec -T frontend npm run lint

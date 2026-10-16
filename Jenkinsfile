@@ -10,6 +10,8 @@ pipeline {
     parameters {
         booleanParam(name: 'DEPLOY_STAGING', defaultValue: false,
             description: 'Deploy verified images to the separate local staging stack')
+        booleanParam(name: 'ENABLE_OBSERVABILITY', defaultValue: false,
+            description: 'Connect staging to the already running shared observability stack')
     }
     triggers {
         githubPush()
@@ -55,7 +57,7 @@ pipeline {
         }
         stage('Package backend') {
             steps {
-                sh 'docker build --target runtime -t codepath-academy-backend:$IMAGE_TAG .'
+                sh 'docker build --target runtime --build-arg APP_VERSION=$IMAGE_TAG -t codepath-academy-backend:$IMAGE_TAG .'
                 writeFile file: 'images.env', text: "IMAGE_TAG=${env.IMAGE_TAG}\n"
                 archiveArtifacts artifacts: 'images.env,reports/backend-html/**', fingerprint: true
             }
@@ -63,9 +65,14 @@ pipeline {
         stage('Deploy staging') {
             when { expression { params.DEPLOY_STAGING } }
             steps {
+                script {
+                    env.OBSERVABILITY_COMPOSE = params.ENABLE_OBSERVABILITY ? '-f compose.observability.yml' : ''
+                }
                 sh '''
-                    docker compose --env-file ci/staging.env -f docker-compose.yml -f ci/compose.staging.yaml config --quiet
-                    docker compose --env-file ci/staging.env -f docker-compose.yml -f ci/compose.staging.yaml up -d --no-build --wait --wait-timeout 240
+                    export DEPLOYMENT_ENVIRONMENT=staging APP_VERSION="$IMAGE_TAG" OTEL_SAMPLE_RATIO=0.2
+                    docker compose --env-file ci/staging.env -f docker-compose.yml -f ci/compose.staging.yaml $OBSERVABILITY_COMPOSE config --quiet
+                    docker compose --env-file ci/staging.env -f docker-compose.yml -f ci/compose.staging.yaml $OBSERVABILITY_COMPOSE up -d --no-build --wait --wait-timeout 240
+                    docker compose --env-file ci/staging.env -f docker-compose.yml -f ci/compose.staging.yaml $OBSERVABILITY_COMPOSE exec -T backend wget -q -O /dev/null http://127.0.0.1:9091/actuator/health
                 '''
             }
         }

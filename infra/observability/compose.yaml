@@ -1,0 +1,94 @@
+name: codepath-observability
+services:
+  init-storage:
+    image: alpine:3.23
+    user: '0:0'
+    command: [sh, -c, 'chown 10001:10001 /loki']
+    volumes:
+      - loki_data:/loki
+    restart: 'no'
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.145.0
+    command: [--config=/etc/otelcol/config.yaml]
+    restart: unless-stopped
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    mem_limit: 384m
+    cpus: 0.5
+    depends_on: [tempo, loki]
+  prometheus:
+    image: prom/prometheus:v3.9.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    mem_limit: 512m
+    cpus: 0.5
+  loki:
+    image: grafana/loki:3.6.0
+    command: [-config.file=/etc/loki/config.yaml]
+    restart: unless-stopped
+    volumes:
+      - ./loki.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    mem_limit: 512m
+    cpus: 0.5
+    depends_on:
+      init-storage:
+        condition: service_completed_successfully
+  tempo:
+    image: grafana/tempo:2.10.0
+    command: [-config.file=/etc/tempo/config.yaml]
+    restart: unless-stopped
+    volumes:
+      - ./tempo.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/var/tempo
+    mem_limit: 512m
+    cpus: 0.5
+  grafana:
+    image: grafana/grafana:12.4.0
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${GRAFANA_PORT:-3000}:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Run setup.ps1 or create infra/observability/.env}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_PLUGINS_PREINSTALL_DISABLED: 'true'
+      GF_SMTP_ENABLED: 'true'
+      GF_SMTP_HOST: ${SMTP_HOST:-alert-mailpit:1025}
+      GF_SMTP_USER: ${SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${SMTP_FROM:-monitoring@codepath.local}
+      GF_SMTP_STARTTLS_POLICY: ${SMTP_STARTTLS_POLICY:-NoStartTLS}
+      ALERT_EMAIL: ${ALERT_EMAIL:-ops@codepath.local}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus, loki, tempo, alert-mailpit]
+    mem_limit: 512m
+    cpus: 0.75
+  alert-mailpit:
+    image: axllent/mailpit:v1.29.2
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${ALERT_MAILPIT_PORT:-18026}:8025
+    environment:
+      MP_MAX_MESSAGES: 200
+    mem_limit: 128m
+networks:
+  default:
+    name: ${OBSERVABILITY_NETWORK:-codepath-observability}
+volumes:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+  grafana_data:

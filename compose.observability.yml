@@ -1,0 +1,29 @@
+# Start infra/observability/compose.yaml first. Can be combined with ci/compose.staging.yaml.
+services:
+  backend:
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:9091/actuator/health || exit 1']
+    environment:
+      JAVA_TOOL_OPTIONS: -javaagent:/otel/opentelemetry-javaagent.jar
+      DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT:-local}
+      OTEL_SERVICE_NAME: codepath-academy-backend
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=${DEPLOYMENT_ENVIRONMENT:-local},service.version=${APP_VERSION:-local}
+      APP_VERSION: ${APP_VERSION:-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_SAMPLE_RATIO:-1.0}
+      OTEL_INSTRUMENTATION_JDBC_STATEMENT_SANITIZER_ENABLED: 'true'
+      OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE_LOGGER_CONTEXT_ATTRIBUTES: 'false'
+    networks:
+      default: {}
+      observability:
+        aliases:
+          - codepath-backend-${DEPLOYMENT_ENVIRONMENT:-local}
+networks:
+  observability:
+    external: true
+    name: ${OBSERVABILITY_NETWORK:-codepath-observability}

@@ -1,0 +1,475 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "codepath-health",
+      "folder": "CodePath",
+      "interval": "30s",
+      "rules": [
+        {
+          "uid": "codepath-backend-down",
+          "title": "Backend unavailable",
+          "condition": "B",
+          "for": "2m",
+          "noDataState": "Alerting",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Backend unavailable",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "critical",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "1 - up{job=\"codepath-backend\"}",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-http-errors",
+          "title": "HTTP 5xx above 5 percent",
+          "condition": "B",
+          "for": "5m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "HTTP 5xx above 5 percent",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "(sum by(deployment)(rate(http_server_requests_seconds_count{job=\"codepath-backend\",status=~\"5..\"}[5m])) / sum by(deployment)(rate(http_server_requests_seconds_count{job=\"codepath-backend\"}[5m])) > bool 0.05) and on(deployment) (sum by(deployment)(increase(http_server_requests_seconds_count{job=\"codepath-backend\"}[5m])) >= 100)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-http-latency",
+          "title": "HTTP p95 above 2 seconds",
+          "condition": "B",
+          "for": "10m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "HTTP p95 above 2 seconds",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "(histogram_quantile(0.95,sum by(le,deployment)(rate(http_server_requests_seconds_bucket{job=\"codepath-backend\",uri!~\"/actuator.*\"}[5m]))) > bool 2) and on(deployment) (sum by(deployment)(increase(http_server_requests_seconds_count{job=\"codepath-backend\",uri!~\"/actuator.*\"}[5m])) >= 100)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-db-pool",
+          "title": "Database pool above 90 percent",
+          "condition": "B",
+          "for": "5m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Database pool above 90 percent",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "hikaricp_connections_active{job=\"codepath-backend\"} / hikaricp_connections_max{job=\"codepath-backend\"} > bool 0.9",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-email-failed",
+          "title": "Email delivery attempts failed",
+          "condition": "B",
+          "for": "1m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Email delivery attempts failed",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "sum by(deployment)(increase(codepath_email_deliveries_total{job=\"codepath-backend\",outcome=\"failure\"}[5m])) > bool 0",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-collector-down",
+          "title": "Collector unavailable",
+          "condition": "B",
+          "for": "2m",
+          "noDataState": "Alerting",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Collector unavailable",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "critical",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "1 - up{job=\"otel-collector\"}",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-export-failed",
+          "title": "Collector exports failing",
+          "condition": "B",
+          "for": "5m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Collector exports failing",
+            "description": "Check the CodePath dashboard and backend/Collector logs. Thresholds are initial defaults; tune to measured traffic.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/observability/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "sum(increase(otelcol_exporter_send_failed_spans_total[5m])) + sum(increase(otelcol_exporter_send_failed_log_records_total[5m])) > bool 0",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
