@@ -14,6 +14,8 @@ import org.springframework.transaction.event.*;
 public class EmailServiceImpl implements EmailService {
 
     private final JmsTemplate jms;
+    @org.springframework.beans.factory.annotation.Value("${app.events.enabled:false}")
+    private boolean businessEventsEnabled;
 
     @Override
     public void sendOtpEmail(String to, String name, String code) {
@@ -30,6 +32,7 @@ public class EmailServiceImpl implements EmailService {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void purchased(OrderService.PurchaseConfirmed event) {
+        if (businessEventsEnabled) return;
         try {
             jms.convertAndSend(
                     "emailQueue",

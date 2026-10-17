@@ -51,6 +51,11 @@ mux:
   signing-key-id: ${MUX_SIGNING_KEY_ID:}
   signing-private-key: ${MUX_SIGNING_PRIVATE_KEY:}
 app:
+  role: ${APP_ROLE:api}
+  events:
+    enabled: ${EVENTS_ENABLED:false}
+    bootstrap: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    prefix: ${KAFKA_TOPIC_PREFIX:codepath.local}
   ai:
     search-enabled: ${AI_SEARCH_ENABLED:false}
     assistant-enabled: ${AI_ASSISTANT_ENABLED:false}

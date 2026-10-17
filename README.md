@@ -124,3 +124,6 @@ node scripts/ui_test.cjs
 Compose dùng Vite development server cho local. Triển khai thực tế cần build frontend, HTTPS, thông tin SMTP/PayOS/Mux, secret riêng, sao lưu và theo dõi lỗi. Artemis nhúng chưa lưu bền queue email và chưa có transactional outbox.
 
 Chưa có giỏ hàng, mã giảm giá, hoàn tiền, chứng chỉ, bài tập tự chấm, phân trang đơn hàng/tài khoản hoặc giảng viên tự quản trị. Signed video không phải DRM; URL MP4 bên ngoài phụ thuộc quyền truy cập của nơi lưu trữ.
+# Kafka và nghiệp vụ bất đồng bộ
+
+Thông báo mua hàng/hoàn thành khóa học, báo cáo doanh thu và worker Kafka: xem [hướng dẫn triển khai và khôi phục](infra/kafka/README.md). Chạy `./infra/kafka/setup.ps1` để bật local; hạ tầng Kafka có Docker Compose riêng dùng chung cho dự án khác.

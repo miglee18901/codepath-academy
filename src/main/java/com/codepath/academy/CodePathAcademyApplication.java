@@ -11,6 +11,7 @@ import org.springframework.jms.annotation.EnableJms;
 public class CodePathAcademyApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CodePathAcademyApplication.class, args);
+        SpringApplication.run("worker".equals(System.getenv("APP_ROLE"))
+                ? com.codepath.worker.WorkerApplication.class : CodePathAcademyApplication.class, args);
     }
 }

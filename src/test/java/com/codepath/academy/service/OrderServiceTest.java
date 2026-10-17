@@ -45,6 +45,7 @@ class OrderServiceTest {
 
     @Mock
     ApplicationEventPublisher events;
+    @Mock com.codepath.academy.events.EventLedger ledger;
 
     @InjectMocks
     OrderService service;
@@ -89,6 +90,7 @@ class OrderServiceTest {
         when(users.lockById(7L)).thenReturn(Optional.of(student));
         OrderItem item = new OrderItem();
         item.setCourseId(3L);
+        item.setPrice(new BigDecimal("100000"));
         when(items.findByOrderId(42L)).thenReturn(List.of(item));
         service.settle(order, new BigDecimal("100000"), "ref");
         ArgumentCaptor<Enrollment> enrollment = ArgumentCaptor.forClass(
@@ -108,6 +110,7 @@ class OrderServiceTest {
         when(users.lockById(7L)).thenReturn(Optional.of(student));
         OrderItem item = new OrderItem();
         item.setCourseId(3L);
+        item.setPrice(new BigDecimal("100000"));
         when(items.findByOrderId(42L)).thenReturn(List.of(item));
         when(enrollments.existsByUserIdAndCourseId(7L, 3L)).thenReturn(true);
         service.settle(order, new BigDecimal("100000"), "ref");
@@ -173,6 +176,7 @@ class OrderServiceTest {
         when(users.lockById(7L)).thenReturn(Optional.of(student));
         OrderItem item = new OrderItem();
         item.setCourseId(3L);
+        item.setPrice(new BigDecimal("100000"));
         when(items.findByOrderId(42L)).thenReturn(List.of(item));
         assertEquals("PAID", service.reconcile(42L, student).get("status"));
         assertEquals("PAID", service.reconcile(42L, student).get("status"));
@@ -248,6 +252,7 @@ class OrderServiceTest {
         when(orders.findByUserIdOrderByIdDesc(7L)).thenReturn(List.of(order));
         OrderItem item = new OrderItem();
         item.setCourseId(3L);
+        item.setPrice(new BigDecimal("100000"));
         when(items.findByOrderId(42L)).thenReturn(List.of(item));
         assertEquals(42L, service.create(student, 3L).get("id"));
         verify(orders, never()).save(any());

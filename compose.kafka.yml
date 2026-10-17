@@ -1,0 +1,57 @@
+# Start infra/kafka/compose.yaml first. Safe to combine with AI and observability overrides.
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-codepath-academy-backend:latest}
+    environment:
+      EVENTS_ENABLED: 'true'
+      KAFKA_TOPIC_PREFIX: ${KAFKA_TOPIC_PREFIX:-codepath.local}
+    networks:
+      default: {}
+      kafka: {}
+  worker:
+    image: ${BACKEND_IMAGE:-codepath-academy-backend:latest}
+    restart: unless-stopped
+    environment:
+      APP_ROLE: worker
+      SERVER_PORT: '-1'
+      EVENTS_ENABLED: 'true'
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: ${KAFKA_TOPIC_PREFIX:-codepath.local}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/academy_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: academy
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-academy_local}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_FLYWAY_ENABLED: 'false'
+      SPRING_ARTEMIS_EMBEDDED_ENABLED: 'false'
+      MANAGEMENT_HEALTH_JMS_ENABLED: 'false'
+      SPRING_MAIL_HOST: ${MAIL_HOST:-mailpit}
+      SPRING_MAIL_PORT: ${MAIL_PORT:-1025}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${MAIL_AUTH:-false}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_STARTTLS:-false}
+      APP_MAILFROM: ${MAIL_FROM:-no-reply@codepath.local}
+      APP_FRONTENDURL: ${FRONTEND_URL:-http://localhost:5173}
+      SPRING_DATA_REDIS_HOST: redis
+      APP_DEMODATA: 'false'
+      SPRING_TASK_SCHEDULING_POOL_SIZE: 4
+      LOGGING_LEVEL_ORG_APACHE_KAFKA: WARN
+      JAVA_TOOL_OPTIONS: -Xmx384m
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:9091/actuator/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      default: {}
+      kafka: {}
+    mem_limit: 640m
+    cpus: 1
+networks:
+  kafka:
+    external: true
+    name: ${KAFKA_NETWORK:-codepath-kafka}

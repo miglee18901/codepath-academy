@@ -31,6 +31,7 @@ public class OrderService {
     private final CourseService courses;
     private final PayOsGateway gateway;
     private final ApplicationEventPublisher events;
+    private final com.codepath.academy.events.EventLedger ledger;
 
     public record PurchaseConfirmed(
             String email,
@@ -184,10 +185,18 @@ public class OrderService {
                 e.setOrderId(order.getId());
                 e.setEnrolledAt(now);
                 enrollments.save(e);
+                ledger.append("EnrollmentGranted", user.getId(), user.getId() + ":" + i.getCourseId(),
+                        Map.of("courseId", i.getCourseId().toString(), "orderId", order.getId().toString()));
             }
         }
         order.setStatus("PAID");
         order.setPaidAt(now);
+        // Current checkout has one course; retain item amounts to support course reports.
+        for (OrderItem i : items.findByOrderId(order.getId())) {
+            ledger.append("OrderPaid", user.getId(), order.getId() + ":" + i.getCourseId(),
+                    Map.of("orderId", order.getId().toString(), "courseId", i.getCourseId().toString(),
+                            "amount", i.getPrice().toPlainString(), "currency", "VND"));
+        }
         events.publishEvent(
                 new PurchaseConfirmed(user.getEmail(), user.getFullName(), order.getId())
         );

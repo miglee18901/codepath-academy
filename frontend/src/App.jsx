@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import {Admin, CourseEditor} from "./pages/Admin";
 import "./App.css";
 import AssistantWidget from "./components/AssistantWidget";
+import Notifications, {NotificationBell} from "./components/Notifications";
 
 function Layout() {
     const navigate = useNavigate();
@@ -49,6 +50,7 @@ function Layout() {
                 <div className="account">
                     {user ? (
                         <>
+                            <NotificationBell key={user.id}/>
                             <Link to="/profile" className="avatar" title={user.username}>
                                 {user.username.slice(0, 1).toUpperCase()}
                             </Link>
@@ -74,6 +76,7 @@ function Layout() {
             </header>
             <main>
                 <Routes>
+                    <Route path="/notifications" element={<Guard><Notifications/></Guard>}/>
                     <Route path="/" element={<Catalog/>}/>
                     <Route path="/courses/:id" element={<CourseDetail/>}/>
                     <Route path="/learn/:courseId/:lessonId?" element={<Learn/>}/>

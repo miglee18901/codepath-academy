@@ -6,6 +6,7 @@ import {useLoad, money} from "../helpers";
 import {OrderTable} from "./Account";
 import {SectionEditor} from "./ContentEditor";
 import AiIndexStatus from "../components/AiIndexStatus";
+import {BusinessReports, BusinessEvents} from "../components/BusinessAdmin";
 
 export function Admin() {
     const [tab, setTab] = useState("overview");
@@ -86,6 +87,8 @@ export function Admin() {
                     ["orders", "Đơn hàng"],
                     ["students", "Tài khoản"],
                     ["ai", "Chỉ mục AI"],
+                    ["reports", "Báo cáo"],
+                    ["events", "Sự kiện"],
                 ].map(([id, label]) => (
                     <button
                         className={tab === id ? "active" : ""}
@@ -101,6 +104,8 @@ export function Admin() {
             </div>
             <Notice>{error}</Notice>
             {tab === "ai" && <AiIndexStatus/>}
+            {tab === "reports" && <BusinessReports/>}
+            {tab === "events" && <BusinessEvents/>}
             {tab === "overview" && (
                 <Status request={stats}>
                     {stats.data && (

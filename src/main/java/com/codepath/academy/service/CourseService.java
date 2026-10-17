@@ -28,6 +28,7 @@ public class CourseService {
     private final LessonRepository lessons;
     private final EnrollmentRepository enrollments;
     private final LessonProgressRepository progress;
+    private final com.codepath.academy.events.EventLedger ledger;
     private final com.codepath.academy.ai.AiIndexRepository aiIndex;
 
     public static Map<String, Object> view(Object... pairs) {
@@ -261,12 +262,12 @@ public class CourseService {
                 .toList();
     }
 
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void updateProgress(Long lessonId, User user, boolean completed) {
         updateProgress(lessonId, user, new ProgressInput(completed, null, null));
     }
 
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public Map<String, Object> updateProgress(Long lessonId, User user, ProgressInput input) {
         Lesson l = lessons.findById(lessonId).orElseThrow(CourseService::missing);
         Long courseId = sections
@@ -282,6 +283,7 @@ public class CourseService {
                 || input.positionSeconds() < 0 || input.durationSeconds() < 1
                 || input.durationSeconds() > 604800 || input.positionSeconds() > input.durationSeconds()))
             throw new IllegalArgumentException("Vị trí xem hoặc thời lượng video không hợp lệ.");
+        // READ_COMMITTED avoids a stale snapshot from the earlier permission reads after waiting for this lock.
         // Serialize updates for the same student, including simultaneous first writes.
         usersLock(user.getId());
         LessonProgress p = progress
@@ -305,6 +307,8 @@ public class CourseService {
         }
         p.setUpdatedAt(LocalDateTime.now());
         progress.save(p);
+        progress.flush();
+        if (p.isCompleted()) ledger.checkCompletion(user.getId(), courseId);
         return view("message", "Đã lưu tiến độ", "completed", p.isCompleted(),
                 "positionSeconds", p.getPositionSeconds(), "durationSeconds", p.getDurationSeconds(),
                 "positionUpdatedAt", p.getPositionUpdatedAt());

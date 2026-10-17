@@ -36,6 +36,7 @@ class CourseServiceTest {
 
     @Mock
     LessonProgressRepository progress;
+    @Mock com.codepath.academy.events.EventLedger ledger;
 
     @Mock
     UserRepository users;

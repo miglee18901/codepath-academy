@@ -1,0 +1,475 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "codepath-events-health",
+      "folder": "CodePath",
+      "interval": "30s",
+      "rules": [
+        {
+          "uid": "codepath-events-worker-down",
+          "title": "Kafka worker unavailable",
+          "condition": "B",
+          "for": "2m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Kafka worker unavailable",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)((max by(deployment)(codepath_events_enabled{job=\"codepath-backend\"}) == 1) unless on(deployment) (up{job=\"codepath-worker\"} == 1))",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-events-outbox-old",
+          "title": "Business outbox older than one minute",
+          "condition": "B",
+          "for": "5m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Business outbox older than one minute",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)(codepath_events_outbox_oldest_seconds{job=\"codepath-worker\"} > 60)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-events-dlt",
+          "title": "Business event requires recovery",
+          "condition": "B",
+          "for": "1m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Business event requires recovery",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)(codepath_events_failures{job=\"codepath-worker\"} > 0)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-events-email",
+          "title": "Business email retries exhausted",
+          "condition": "B",
+          "for": "1m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Business email retries exhausted",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)(codepath_events_email_failed{job=\"codepath-worker\"} > 0)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-events-lag",
+          "title": "Kafka consumer lag is not decreasing",
+          "condition": "B",
+          "for": "5m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Kafka consumer lag is not decreasing",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)((codepath_events_consumer_lag{job=\"codepath-worker\"} > 0) and (delta(codepath_events_consumer_lag{job=\"codepath-worker\"}[5m]) >= 0))",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-events-broker",
+          "title": "Kafka broker unreachable",
+          "condition": "B",
+          "for": "2m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Kafka broker unreachable",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)(codepath_events_broker_available{job=\"codepath-worker\"} == 0)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-events-consumers",
+          "title": "Kafka consumer stopped",
+          "condition": "B",
+          "for": "2m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "Kafka consumer stopped",
+            "description": "Open Admin → Sự kiện. Check worker/Kafka health and retry failed events or email jobs.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/kafka/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "count by(deployment)(codepath_events_consumers_running{job=\"codepath-worker\"} < 4)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

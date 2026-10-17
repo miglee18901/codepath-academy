@@ -1250,3 +1250,9 @@ footer > span {
 .pagination [aria-current="page"] {
     font-weight: 700;
 }
+.notification-bell { display: inline-flex; align-items: center; gap: 4px; }
+.notification-list { display: grid; gap: 16px; }
+.notification-list h2 { font-size: 1.1rem; }
+.business-filters { flex-wrap: wrap; align-items: end; }
+.business-filters label { flex: 1 1 150px; min-width: 0; }
+.business-filters select { max-width: 100%; }
