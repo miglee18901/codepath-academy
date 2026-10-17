@@ -1,0 +1,406 @@
+# Standalone learning stack. Do not combine with legacy Compose overrides.
+# Initialize: ./scripts/learning.ps1 init
+# Start: ./scripts/learning.ps1 up (add -WithJenkins for CI)
+name: codepath-academy
+services:
+  # Application data and local email
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: academy_db
+      MYSQL_USER: academy
+      MYSQL_PASSWORD: ${DB_PASSWORD:-academy_local}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_local}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u\"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+  backend:
+    # API also runs Flyway before the worker starts.
+    build: .
+    image: ${BACKEND_IMAGE:-codepath-academy-backend:latest}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      EVENTS_ENABLED: 'true'
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: ${KAFKA_TOPIC_PREFIX:-codepath.local}
+      AI_SEARCH_ENABLED: ${AI_SEARCH_ENABLED:-true}
+      AI_ASSISTANT_ENABLED: ${AI_ASSISTANT_ENABLED:-true}
+      AI_INDEXING_ENABLED: ${AI_INDEXING_ENABLED:-true}
+      AI_OLLAMA_URL: http://ollama:11434
+      AI_QDRANT_URL: http://qdrant:6333
+      AI_QDRANT_API_KEY: ${LEARNING_QDRANT_API_KEY:?Run scripts/learning.ps1 init}
+      AI_COLLECTION: ${AI_COLLECTION:-codepath_local_v1}
+      AI_EMBEDDING_MODEL: embeddinggemma:300m
+      AI_CHAT_MODEL: qwen3:4b-instruct-2507-q4_K_M
+      JAVA_TOOL_OPTIONS: -javaagent:/otel/opentelemetry-javaagent.jar
+      DEPLOYMENT_ENVIRONMENT: local
+      APP_VERSION: ${APP_VERSION:-local}
+      OTEL_SERVICE_NAME: codepath-academy-backend
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=local,service.version=${APP_VERSION:-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_SAMPLE_RATIO:-1.0}
+      OTEL_INSTRUMENTATION_JDBC_STATEMENT_SANITIZER_ENABLED: 'true'
+      OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE_LOGGER_CONTEXT_ATTRIBUTES: 'false'
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/academy_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: academy
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-academy_local}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_MAIL_HOST: ${MAIL_HOST:-mailpit}
+      SPRING_MAIL_PORT: ${MAIL_PORT:-1025}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${MAIL_AUTH:-false}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_STARTTLS:-false}
+      APP_MAILFROM: ${MAIL_FROM:-no-reply@codepath.local}
+      APP_DEMODATA: ${DEMO_DATA:-true}
+      APP_FRONTENDURL: ${FRONTEND_URL:-http://localhost:5173}
+      PASSKEY_RP_ID: ${PASSKEY_RP_ID:-}
+      PASSKEY_ORIGINS: ${PASSKEY_ORIGINS:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      OAUTH_CALLBACK_BASE_URL: ${OAUTH_CALLBACK_BASE_URL:-}
+      OAUTH_COOKIE_SECURE: ${OAUTH_COOKIE_SECURE:-false}
+      MUX_TOKEN_ID: ${MUX_TOKEN_ID:-}
+      MUX_TOKEN_SECRET: ${MUX_TOKEN_SECRET:-}
+      MUX_SIGNING_KEY_ID: ${MUX_SIGNING_KEY_ID:-}
+      MUX_SIGNING_PRIVATE_KEY: ${MUX_SIGNING_PRIVATE_KEY:-}
+      JWT_SECRET: ${JWT_SECRET:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+      CLIENT_ID: ${PAYOS_CLIENT_ID:-local-placeholder}
+      API_KEY: ${PAYOS_API_KEY:-local-placeholder}
+      CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:-local-placeholder}
+      GOOGLE_RECAPTCHA_SECRETKEY: ${RECAPTCHA_SECRET_KEY:-6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe}
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9091/actuator/health || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      kafka:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      default:
+        aliases: [codepath-backend-local]
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: ${FRONTEND_API_URL:-}
+      API_PROXY_TARGET: http://backend:8080
+      FRONTEND_PUBLIC_URL: ${FRONTEND_URL:-http://localhost:5173}
+      VITE_RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+  worker:
+    # Same application image, separate background role.
+    image: ${BACKEND_IMAGE:-codepath-academy-backend:latest}
+    restart: unless-stopped
+    environment:
+      APP_ROLE: worker
+      SERVER_PORT: '-1'
+      EVENTS_ENABLED: 'true'
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: ${KAFKA_TOPIC_PREFIX:-codepath.local}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/academy_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: academy
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-academy_local}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_FLYWAY_ENABLED: 'false'
+      SPRING_ARTEMIS_EMBEDDED_ENABLED: 'false'
+      MANAGEMENT_HEALTH_JMS_ENABLED: 'false'
+      SPRING_MAIL_HOST: ${MAIL_HOST:-mailpit}
+      SPRING_MAIL_PORT: ${MAIL_PORT:-1025}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${MAIL_AUTH:-false}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_STARTTLS:-false}
+      APP_MAILFROM: ${MAIL_FROM:-no-reply@codepath.local}
+      APP_FRONTENDURL: ${FRONTEND_URL:-http://localhost:5173}
+      SPRING_DATA_REDIS_HOST: redis
+      APP_DEMODATA: 'false'
+      SPRING_TASK_SCHEDULING_POOL_SIZE: 4
+      LOGGING_LEVEL_ORG_APACHE_KAFKA: WARN
+      JAVA_TOOL_OPTIONS: -Xmx384m -javaagent:/otel/opentelemetry-javaagent.jar
+      DEPLOYMENT_ENVIRONMENT: local
+      APP_VERSION: ${APP_VERSION:-local}
+      OTEL_SERVICE_NAME: codepath-academy-worker
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=local,service.version=${APP_VERSION:-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_SAMPLE_RATIO:-1.0}
+      OTEL_INSTRUMENTATION_JDBC_STATEMENT_SANITIZER_ENABLED: 'true'
+      OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE_LOGGER_CONTEXT_ATTRIBUTES: 'false'
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:9091/actuator/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      default:
+        aliases: [codepath-worker-local]
+    mem_limit: 640m
+    cpus: 1
+  kafka:
+    # Single-broker KRaft cluster for local learning.
+    image: apache/kafka:4.1.1@sha256:0bc1bb2478f45b6cea78864df86acdc11e8df2c5172477819a4d12942cbe5d40
+    restart: unless-stopped
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: [CMD-SHELL, '/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1']
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    mem_limit: 1g
+    cpus: 1
+  qdrant:
+    # AI: vector store and local model runtime.
+    image: qdrant/qdrant:v1.15.5@sha256:0fb8897412abc81d1c0430a899b9a81eb8328aa634e7242d1bc804c1fe8fe863
+    restart: unless-stopped
+    environment:
+      QDRANT__TELEMETRY_DISABLED: 'true'
+      QDRANT__SERVICE__API_KEY: ${LEARNING_QDRANT_API_KEY:?Run scripts/learning.ps1 init}
+    volumes:
+      - qdrant_data:/qdrant/storage
+    mem_limit: 512m
+    cpus: 1
+  ollama:
+    image: ollama/ollama:0.13.5@sha256:2c9595c555fd70a28363489ac03bd5bf9e7c5bdf2890373c3a830ffd7252ce6d
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: '1'
+      OLLAMA_NUM_PARALLEL: '1'
+      OLLAMA_MAX_LOADED_MODELS: '1'
+      OLLAMA_MAX_QUEUE: '3'
+      OLLAMA_KEEP_ALIVE: '0'
+      OLLAMA_CONTEXT_LENGTH: '4096'
+    volumes:
+      - ollama_data:/root/.ollama
+    mem_limit: 4g
+    cpus: 3
+    healthcheck:
+      test: [CMD, ollama, list]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+  init-storage:
+    # Observability: traces, logs, metrics, dashboards and alert email.
+    image: alpine:3.23
+    user: '0:0'
+    command: [sh, -c, 'chown 10001:10001 /loki']
+    volumes:
+      - loki_data:/loki
+    restart: 'no'
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.145.0
+    command: [--config=/etc/otelcol/config.yaml]
+    restart: unless-stopped
+    volumes:
+      - ./infra/observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    mem_limit: 384m
+    cpus: 0.5
+    depends_on: [tempo, loki]
+  prometheus:
+    image: prom/prometheus:v3.9.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+    restart: unless-stopped
+    volumes:
+      - ./infra/observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    mem_limit: 512m
+    cpus: 0.5
+  loki:
+    image: grafana/loki:3.6.0
+    command: [-config.file=/etc/loki/config.yaml]
+    restart: unless-stopped
+    volumes:
+      - ./infra/observability/loki.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    mem_limit: 512m
+    cpus: 0.5
+    depends_on:
+      init-storage:
+        condition: service_completed_successfully
+  tempo:
+    image: grafana/tempo:2.10.0
+    command: [-config.file=/etc/tempo/config.yaml]
+    restart: unless-stopped
+    volumes:
+      - ./infra/observability/tempo.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/var/tempo
+    mem_limit: 512m
+    cpus: 0.5
+  grafana:
+    image: grafana/grafana:12.4.0
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${GRAFANA_PORT:-3000}:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${LEARNING_GRAFANA_PASSWORD:?Run scripts/learning.ps1 init}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_PLUGINS_PREINSTALL_DISABLED: 'true'
+      GF_SMTP_ENABLED: 'true'
+      GF_SMTP_HOST: ${SMTP_HOST:-alert-mailpit:1025}
+      GF_SMTP_USER: ${SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${SMTP_FROM:-monitoring@codepath.local}
+      GF_SMTP_STARTTLS_POLICY: ${SMTP_STARTTLS_POLICY:-NoStartTLS}
+      ALERT_EMAIL: ${ALERT_EMAIL:-ops@codepath.local}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus, loki, tempo, alert-mailpit]
+    mem_limit: 512m
+    cpus: 0.75
+  alert-mailpit:
+    image: axllent/mailpit:v1.29.2
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${ALERT_MAILPIT_PORT:-18026}:8025
+    environment:
+      MP_MAX_MESSAGES: 200
+    mem_limit: 128m
+  jenkins:
+    # Optional CI/CD: enable with --profile ci.
+    profiles: [ci]
+    build: ./infra/jenkins
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${JENKINS_BIND_ADDRESS:-127.0.0.1}:${JENKINS_HTTP_PORT:-8090}:8080"
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false -Djava.awt.headless=true
+      JENKINS_URL: ${JENKINS_URL:-http://localhost:8090/}
+      JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
+      SEED_JOB_NAME: ${SEED_JOB_NAME:-codepath-academy}
+      SEED_REPO_URL: ${SEED_REPO_URL:-https://github.com/miglee18901/codepath-academy.git}
+      SEED_REPO_BRANCH: ${SEED_REPO_BRANCH:-main}
+      SEED_CREDENTIALS_ID: ${SEED_CREDENTIALS_ID:-}
+      SEED_SCRIPT_PATH: ${SEED_SCRIPT_PATH:-Jenkinsfile}
+    group_add:
+      - "${DOCKER_GID:-0}"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - jenkins_admin_password
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS http://localhost:8080/login >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 30
+    stop_grace_period: 60s
+volumes:
+  mysql_data:
+  redis_data:
+  kafka_data:
+    name: codepath-kafka_kafka_data
+    external: true
+  qdrant_data:
+    name: codepath-ai_qdrant_data
+    external: true
+  ollama_data:
+    name: codepath-ai_ollama_data
+    external: true
+  prometheus_data:
+    name: codepath-observability_prometheus_data
+    external: true
+  loki_data:
+    name: codepath-observability_loki_data
+    external: true
+  tempo_data:
+    name: codepath-observability_tempo_data
+    external: true
+  grafana_data:
+    name: codepath-observability_grafana_data
+    external: true
+  jenkins_home:
+    name: shared-jenkins_jenkins_home
+    external: true
+secrets:
+  jenkins_admin_password:
+    file: ./infra/jenkins/secrets/admin-password.txt

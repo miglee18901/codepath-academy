@@ -23,6 +23,15 @@ docs/                               Kiến trúc, cấu hình và từng luồng
 
 ## Chạy nhanh bằng Docker
 
+Muốn học và quản lý **ứng dụng + Kafka + AI + giám sát + Jenkins trong một Compose**, dùng:
+
+```powershell
+./scripts/learning.ps1 up -WithJenkins
+./scripts/learning.ps1 status
+```
+
+File chung: [`compose.learning.yaml`](compose.learning.yaml). Xem [hướng dẫn chạy, cấu hình và quản lý](docs/docker-learning.md). Các lệnh bên dưới vẫn là chế độ ứng dụng cơ bản.
+
 Cần Docker Desktop với Linux containers. Chạy tại thư mục gốc:
 
 ```powershell

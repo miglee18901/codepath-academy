@@ -2,7 +2,11 @@
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const {spawnSync} = require('node:child_process');
-const config = Object.fromEntries(fs.readFileSync('infra/observability/.env','utf8').split(/\r?\n/).filter(l=>l && !l.startsWith('#')).map(l=>{const i=l.indexOf('=');return [l.slice(0,i),l.slice(i+1)];}));
+const learning = process.env.CODEPATH_LEARNING === '1';
+const readConfig = path => fs.existsSync(path) ? Object.fromEntries(fs.readFileSync(path,'utf8').split(/\r?\n/).filter(l=>l && !l.startsWith('#') && l.includes('=')).map(l=>{const i=l.indexOf('=');return [l.slice(0,i),l.slice(i+1)];})) : {};
+const config = learning ? {...readConfig('.env'), ...readConfig('.env.learning')} : readConfig('infra/observability/.env');
+if (learning) config.GRAFANA_ADMIN_PASSWORD = config.LEARNING_GRAFANA_PASSWORD;
+const compose = learning ? ['compose', ...(fs.existsSync('.env') ? ['--env-file','.env'] : []), '--env-file','.env.learning','-f','compose.learning.yaml'] : ['compose','--env-file','infra/observability/.env','-f','infra/observability/compose.yaml'];
 const base = process.env.GRAFANA_URL || `http://127.0.0.1:${config.GRAFANA_PORT||3000}`;
 const app = process.env.APP_URL || 'http://127.0.0.1:8080';
 const headers = {Authorization:'Basic '+Buffer.from(`${config.GRAFANA_ADMIN_USER||'admin'}:${config.GRAFANA_ADMIN_PASSWORD}`).toString('base64')};
@@ -28,7 +32,7 @@ async function main() {
  const logs=await eventually('Application logs in Loki with trace IDs',async()=>{const r=await api(proxy('loki','/loki/api/v1/query_range?query='+encodeURIComponent('{service_name="codepath-academy-backend"} |= "HTTP method="')+'&limit=20'));assert(r.data.result.length);assert(JSON.stringify(r.data.result).includes('trace_id'));return r;});
  await eventually('Backend traces in Tempo',async()=>{const r=await api(proxy('tempo','/api/search?tags='+encodeURIComponent('service.name=codepath-academy-backend')+'&limit=5'));assert(r.traces?.length); const detail=await api(proxy('tempo','/api/traces/'+r.traces[0].traceID));assert(detail.batches?.length || detail.resourceSpans?.length);});
  const marker='otel-redaction-'+Date.now();const body={resourceLogs:[{resource:{attributes:[{key:'service.name',value:{stringValue:'observability-smoke-test'}}]},scopeLogs:[{logRecords:[{timeUnixNano:String(BigInt(Date.now())*1000000n),severityText:'INFO',body:{stringValue:`${marker} Bearer SYNTHETIC_TOKEN password=SYNTHETIC_PASSWORD`}}]}]}]};
- const sent=spawnSync('docker',['compose','--env-file','infra/observability/.env','-f','infra/observability/compose.yaml','exec','-T','grafana','wget','-q','-O','-','--header=Content-Type: application/json','--post-file=/dev/stdin','http://otel-collector:4318/v1/logs'],{input:JSON.stringify(body),encoding:'utf8'});assert.equal(sent.status,0,sent.stderr);
+ const sent=spawnSync('docker',[...compose,'exec','-T','grafana','wget','-q','-O','-','--header=Content-Type: application/json','--post-file=/dev/stdin','http://otel-collector:4318/v1/logs'],{input:JSON.stringify(body),encoding:'utf8'});assert.equal(sent.status,0,sent.stderr);
  await eventually('Collector redacts synthetic credentials',async()=>{const r=await api(proxy('loki','/loki/api/v1/query_range?query='+encodeURIComponent(`{service_name="observability-smoke-test"} |= "${marker}"`)));assert(r.data.result.length);const s=JSON.stringify(r.data.result);assert(!s.includes('SYNTHETIC_TOKEN'));assert(!s.includes('SYNTHETIC_PASSWORD'));});
  const traceId=require('node:crypto').randomBytes(16).toString('hex');
  await fetch(app+'/api/categories?access_token=SYNTHETIC_URL_SECRET',{headers:{traceparent:`00-${traceId}-0123456789abcdef-01`}});
