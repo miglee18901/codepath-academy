@@ -13,7 +13,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infra/observability/setup.ps
 Script tạo `infra/observability/.env` với mật khẩu Grafana ngẫu nhiên nếu chưa có, khởi động bộ giám sát, build/backend và chạy smoke test. File `.env` được Git bỏ qua; không gửi mật khẩu vào chat hay commit. `-SkipBackend` chỉ khởi động bộ giám sát.
 
 - Grafana: http://localhost:3000 ; username mặc định `admin`, password trong `infra/observability/.env`.
-- Dashboard: http://localhost:3000/d/codepath-overview ; bốn dashboard trong folder **CodePath**.
+- Dashboard: http://localhost:3000/d/codepath-overview ; năm dashboard trong folder **CodePath**, gồm AI Search & RAG khi dùng tính năng AI local.
 - Email cảnh báo local: http://localhost:18026 . Mailpit chỉ giữ thư kiểm thử, không chuyển ra email thật.
 - Ứng dụng: http://localhost:5173 . Backend vẫn dùng cổng 8080.
 
@@ -50,6 +50,7 @@ Override chuyển healthcheck Docker sang management health để probe không t
 | JVM and database | Heap, GC, CPU process, threads, Hikari active/pending |
 | Authentication and email | Kết quả HTTP đăng nhập password/Passkey/OAuth/xác minh đăng ký, email và thời gian xử lý |
 | Telemetry infrastructure | Trạng thái scrape, spans nhận được, lỗi xuất logs/traces |
+| AI Search & RAG | Độ trễ, kết quả truy vấn, fallback, backlog và lỗi lập chỉ mục; [hướng dẫn AI](../ai/README.md) |
 
 Các counter nghiệp vụ:
 
@@ -69,7 +70,7 @@ Grafana provision bảy rule, đánh giá mỗi 30 giây:
 |---|---|
 | Backend unavailable | Scrape backend không thành công liên tục 2 phút |
 | HTTP 5xx | Trên 5%, tối thiểu 100 request/5 phút, kéo dài 5 phút |
-| HTTP p95 | Trên 2 giây, tối thiểu 100 request/5 phút, kéo dài 10 phút |
+| HTTP p95 | Trên 2 giây, tối thiểu 100 request/5 phút, kéo dài 10 phút; loại API trợ lý/tìm kiếm AI có ngân sách latency riêng |
 | Database pool | Active/max trên 90% trong 5 phút |
 | Email failures | Có lần gửi thất bại trong cửa sổ 5 phút, kéo dài 1 phút |
 | Collector unavailable | Scrape Collector không thành công liên tục 2 phút |
@@ -89,7 +90,7 @@ node scripts/observability_alert_test.cjs
 node scripts/observability_resilience_test.cjs
 ```
 
-- Smoke test kiểm tra targets, histogram HTTP, auth counter, bốn dashboard và toàn bộ PromQL, bảy rule, logs/trace, redaction log giả lập và loại query string nhạy cảm khỏi trace. Nó gửi một lần login không hợp lệ và telemetry giả lập.
+- Smoke test kiểm tra targets, histogram HTTP, auth counter, năm dashboard và toàn bộ PromQL, chín rule, logs/trace, redaction log giả lập và loại query string nhạy cảm khỏi trace. Nó gửi một lần login không hợp lệ và telemetry giả lập. Hai rule AI theo dõi backlog quá 10 phút và job hết lượt thử, chỉ hoạt động khi worker được bật; xem [runbook AI](../ai/README.md).
 - Alert test tạo rule tạm `vector(1)`, chờ email vào Mailpit rồi xóa rule trong `finally`. Chỉ chạy với SMTP local mặc định, có thể mất khoảng 2 phút. Không sửa rule provision chính.
 - Resilience test dừng Collector vài giây, kiểm tra API vẫn trả 200, khởi động lại Collector trong `finally`. Chạy trên local khi chủ động kiểm thử.
 

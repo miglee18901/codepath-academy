@@ -2,11 +2,11 @@ FROM gradle:9.5.1-jdk17 AS build
 WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY src ./src
-RUN gradle --no-daemon bootJar -x test && \
+RUN --mount=type=cache,target=/home/gradle/.gradle,sharing=locked gradle --no-daemon bootJar -x test && \
     cp build/libs/*-SNAPSHOT.jar /app/application.jar
 
 FROM build AS test
-RUN gradle --no-daemon test
+RUN --mount=type=cache,target=/home/gradle/.gradle,sharing=locked gradle --no-daemon test
 
 FROM alpine:3.23 AS telemetry
 ARG OTEL_AGENT_VERSION=2.32.0

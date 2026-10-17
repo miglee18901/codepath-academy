@@ -25,6 +25,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final CourseRepository courses;
     private final CourseSectionRepository sections;
     private final LessonRepository lessons;
+    private final com.codepath.academy.ai.AiIndexRepository aiIndex;
 
     @Override
     @Transactional
@@ -123,5 +124,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                 lessons.save(l);
             }
         }
+        aiIndex.enqueue(c.getId());
     }
 }

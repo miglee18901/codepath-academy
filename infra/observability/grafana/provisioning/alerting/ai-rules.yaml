@@ -1,0 +1,145 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "codepath-ai-health",
+      "folder": "CodePath",
+      "interval": "30s",
+      "rules": [
+        {
+          "uid": "codepath-ai-index-backlog",
+          "title": "AI index backlog older than 10 minutes",
+          "condition": "B",
+          "for": "1m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "AI index backlog older than 10 minutes",
+            "description": "Open Admin → Chỉ mục AI; check Ollama/Qdrant memory and availability, then retry failed courses.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/ai/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "(codepath_ai_index_oldest_seconds{job=\"codepath-backend\"} > 600) and on(instance) (codepath_ai_index_enabled{job=\"codepath-backend\"} == 1)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "codepath-ai-index-failed",
+          "title": "AI index job exhausted retries",
+          "condition": "B",
+          "for": "1m",
+          "noDataState": "OK",
+          "execErrState": "Alerting",
+          "annotations": {
+            "summary": "AI index job exhausted retries",
+            "description": "Open Admin → Chỉ mục AI; check Ollama/Qdrant memory and availability, then retry failed courses.",
+            "runbook_url": "https://github.com/miglee18901/codepath-academy/blob/main/infra/ai/README.md"
+          },
+          "labels": {
+            "severity": "warning",
+            "service": "codepath-academy"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "refId": "A",
+                "expr": "(codepath_ai_index_failed{job=\"codepath-backend\"} > 0) and on(instance) (codepath_ai_index_enabled{job=\"codepath-backend\"} == 1)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 15000,
+                "maxDataPoints": 43200
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "threshold",
+                "expression": "A",
+                "conditions": [
+                  {
+                    "type": "query",
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

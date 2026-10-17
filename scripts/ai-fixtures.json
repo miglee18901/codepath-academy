@@ -1,0 +1,142 @@
+[
+  {
+    "title": "Dependency Injection trong Java",
+    "text": "Dependency Injection là cách truyền đối tượng phụ thuộc từ bên ngoài vào lớp thay vì lớp tự tạo bằng new. Constructor injection giúp phụ thuộc rõ ràng và dễ kiểm thử bằng mock.",
+    "queries": [
+      "truyền phụ thuộc vào constructor để dễ mock",
+      "đối tượng được cấp từ bên ngoài thay vì tự new",
+      "giảm phụ thuộc cứng khi viết kiểm thử Java"
+    ],
+    "questions": [
+      "Dependency Injection truyền phụ thuộc như thế nào?",
+      "Vì sao constructor injection giúp kiểm thử dễ hơn?"
+    ],
+    "reference": "Phụ thuộc được truyền từ bên ngoài qua constructor; dễ thay bằng mock khi kiểm thử."
+  },
+  {
+    "title": "Rollback giao dịch SQL",
+    "text": "Rollback hủy những thay đổi chưa commit của giao dịch SQL. Khi chuyển tiền thất bại giữa chừng, rollback tránh tình trạng chỉ trừ tiền mà chưa cộng tiền. Commit xác nhận các thay đổi của giao dịch.",
+    "queries": [
+      "hủy thay đổi chưa xác nhận khi chuyển tiền lỗi",
+      "SQL giao dịch thất bại muốn quay về trạng thái cũ",
+      "chỉ trừ tiền chưa cộng tiền xử lý thế nào"
+    ],
+    "questions": [
+      "Rollback có tác dụng gì trong SQL?",
+      "Trong ví dụ chuyển tiền lỗi giữa chừng nên làm gì?"
+    ],
+    "reference": "Rollback hủy thay đổi chưa commit, tránh chỉ trừ tiền mà chưa cộng tiền."
+  },
+  {
+    "title": "Chỉ mục cơ sở dữ liệu",
+    "text": "Chỉ mục giúp truy vấn tìm bản ghi nhanh hơn nhờ giảm số dòng phải quét. Đổi lại chỉ mục chiếm dung lượng lưu trữ và làm tăng chi phí cập nhật khi INSERT, UPDATE hoặc DELETE.",
+    "queries": [
+      "tăng tốc tìm bản ghi thay vì quét toàn bảng",
+      "vì sao thêm index làm ghi dữ liệu tốn hơn",
+      "đánh đổi dung lượng và tốc độ truy vấn"
+    ],
+    "questions": [
+      "Chỉ mục giúp truy vấn nhanh hơn bằng cách nào?",
+      "Thêm chỉ mục có đánh đổi gì?"
+    ],
+    "reference": "Chỉ mục giảm số dòng quét nhưng tốn dung lượng và tăng chi phí ghi/cập nhật."
+  },
+  {
+    "title": "Redis TTL và cache",
+    "text": "TTL là thời gian sống của một khóa Redis. Khi hết TTL, khóa hết hạn và ứng dụng phải đọc nguồn dữ liệu chính để tạo lại cache. TTL giúp giới hạn thời gian tồn tại của dữ liệu cache cũ.",
+    "queries": [
+      "tự hết hạn khóa bộ nhớ đệm",
+      "tránh dữ liệu cache cũ tồn tại mãi",
+      "Redis key biến mất sau một khoảng thời gian"
+    ],
+    "questions": [
+      "TTL trong Redis là gì?",
+      "Khi cache hết TTL ứng dụng cần làm gì?"
+    ],
+    "reference": "TTL là thời gian sống; khi hết hạn đọc dữ liệu chính và tạo lại cache."
+  },
+  {
+    "title": "React useEffect cleanup",
+    "text": "Hàm cleanup của useEffect chạy trước lần effect kế tiếp khi dependency thay đổi và khi component unmount. Cleanup dùng để hủy timer, gỡ event listener hoặc hủy request nhằm tránh cập nhật không còn cần thiết.",
+    "queries": [
+      "gỡ event listener khi component bị tháo",
+      "hủy timer và request trong vòng đời giao diện",
+      "dọn tài nguyên trước khi effect chạy lại"
+    ],
+    "questions": [
+      "Cleanup của useEffect chạy khi nào?",
+      "Cleanup thường dùng để dọn những tài nguyên nào?"
+    ],
+    "reference": "Cleanup chạy trước effect kế tiếp và khi unmount; hủy timer/listener/request."
+  },
+  {
+    "title": "JWT và chữ ký",
+    "text": "JWT có chữ ký giúp máy chủ phát hiện token đã bị sửa. Chữ ký không mã hóa payload; không đặt mật khẩu hoặc bí mật vào payload JWT. Máy chủ phải kiểm tra chữ ký và thời hạn trước khi tin token.",
+    "queries": [
+      "token ký số không có nghĩa là che giấu payload",
+      "phát hiện bearer token bị sửa bằng chữ ký",
+      "tại sao không chứa mật khẩu trong JWT"
+    ],
+    "questions": [
+      "Chữ ký JWT bảo vệ điều gì?",
+      "Có nên đặt mật khẩu trong payload JWT không?"
+    ],
+    "reference": "Chữ ký phát hiện sửa token, không mã hóa payload; không lưu mật khẩu và phải kiểm tra thời hạn."
+  },
+  {
+    "title": "Passkey và WebAuthn",
+    "text": "Passkey dùng cặp khóa bất đối xứng: khóa riêng ở thiết bị hoặc trình quản lý passkey, máy chủ lưu khóa công khai. Thiết bị ký challenge và máy chủ xác minh chữ ký; khóa riêng không được gửi tới máy chủ.",
+    "queries": [
+      "đăng nhập bằng cặp khóa thay mật khẩu",
+      "thiết bị ký challenge máy chủ kiểm tra khóa công khai",
+      "WebAuthn private key không truyền lên server"
+    ],
+    "questions": [
+      "Máy chủ lưu khóa nào khi dùng passkey?",
+      "Thiết bị chứng minh đăng nhập bằng passkey như thế nào?"
+    ],
+    "reference": "Máy chủ lưu khóa công khai; thiết bị giữ khóa riêng và ký challenge."
+  },
+  {
+    "title": "Docker Compose và volume",
+    "text": "Docker Compose khai báo nhiều service và mạng trong một tệp để khởi động cùng nhau. Named volume lưu dữ liệu độc lập với vòng đời container. Lệnh docker compose down giữ volume, còn down -v xóa volume của project.",
+    "queries": [
+      "lưu database khi container được tạo lại",
+      "chạy nhiều service qua một tệp cấu hình",
+      "khác biệt compose down với down -v"
+    ],
+    "questions": [
+      "Named volume có tác dụng gì?",
+      "docker compose down -v khác down như thế nào?"
+    ],
+    "reference": "Named volume giữ dữ liệu độc lập container; down giữ volume và down -v xóa volume."
+  },
+  {
+    "title": "HTTP 401 và 403",
+    "text": "HTTP 401 cho biết request chưa được xác thực hợp lệ, chẳng hạn token thiếu hoặc hết hạn. HTTP 403 cho biết request bị từ chối quyền truy cập dù danh tính có thể đã được xác thực.",
+    "queries": [
+      "phân biệt chưa đăng nhập với không có quyền",
+      "token hết hạn trả mã HTTP nào",
+      "đã xác thực nhưng bị cấm truy cập API"
+    ],
+    "questions": [
+      "HTTP 401 thường biểu thị điều gì?",
+      "HTTP 403 khác HTTP 401 như thế nào?"
+    ],
+    "reference": "401 chưa xác thực hợp lệ; 403 bị từ chối quyền truy cập."
+  },
+  {
+    "title": "OpenTelemetry distributed tracing",
+    "text": "Distributed tracing liên kết các span của cùng request bằng trace ID. Mỗi span mô tả một thao tác và thời gian của thao tác đó, giúp tìm bước gây chậm khi request đi qua nhiều thành phần.",
+    "queries": [
+      "tìm thao tác gây chậm qua nhiều dịch vụ",
+      "liên kết các span bằng cùng trace ID",
+      "theo dõi hành trình request giữa các thành phần"
+    ],
+    "questions": [
+      "Trace ID dùng để làm gì?",
+      "Span giúp tìm bước gây chậm như thế nào?"
+    ],
+    "reference": "Trace ID liên kết span cùng request; span ghi thao tác và thời gian để tìm điểm chậm."
+  }
+]

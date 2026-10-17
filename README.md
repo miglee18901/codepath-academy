@@ -89,6 +89,8 @@ Bộ Jenkins Docker dùng chung nằm tại [`infra/jenkins`](infra/jenkins/READ
 
 ## Kiểm thử
 
+Tìm kiếm ngữ nghĩa và trợ lý hỏi đáp theo quyền học bằng AI local (Ollama + Qdrant): xem [`infra/ai/README.md`](infra/ai/README.md). Chạy `powershell -NoProfile -ExecutionPolicy Bypass -File infra/ai/setup.ps1 -WithObservability` nếu đang dùng bộ giám sát. Mặc định AI tắt; script bật và tải mô hình. Không cần API key của nhà cung cấp AI.
+
 Giám sát Docker bằng OpenTelemetry, Prometheus, Loki, Tempo và Grafana: xem [`infra/observability/README.md`](infra/observability/README.md). Chạy `powershell -NoProfile -ExecutionPolicy Bypass -File infra/observability/setup.ps1`; Grafana tại http://localhost:3000, hộp thư cảnh báo local tại http://localhost:18026. Dashboard/rule cảnh báo được quản lý trong Git; mật khẩu nằm trong file `.env` được bỏ qua.
 
 ```powershell

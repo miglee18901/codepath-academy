@@ -1,0 +1,23 @@
+services:
+  backend:
+    env_file:
+      - ./infra/ai/.env
+    environment:
+      AI_SEARCH_ENABLED: ${AI_SEARCH_ENABLED:-true}
+      AI_ASSISTANT_ENABLED: ${AI_ASSISTANT_ENABLED:-true}
+      AI_INDEXING_ENABLED: ${AI_INDEXING_ENABLED:-true}
+      AI_OLLAMA_URL: http://ollama:11434
+      AI_QDRANT_URL: http://qdrant:6333
+      AI_COLLECTION: ${AI_COLLECTION:-codepath_local_v1}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-embeddinggemma:300m}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL:-qwen3:4b-instruct-2507-q4_K_M}
+      AI_EMBEDDING_DIMENSIONS: ${AI_EMBEDDING_DIMENSIONS:-768}
+      AI_MIN_SCORE: ${AI_MIN_SCORE:-0.35}
+      AI_NUM_THREADS: ${AI_NUM_THREADS:-3}
+    networks:
+      - default
+      - ai
+networks:
+  ai:
+    external: true
+    name: ${AI_NETWORK:-codepath-ai}

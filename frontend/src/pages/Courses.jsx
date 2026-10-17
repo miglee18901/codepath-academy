@@ -10,18 +10,23 @@ export function Catalog() {
     const [params, setParams] = useSearchParams();
     const search = params.get("q") || "";
     const category = params.get("categoryId") || "";
+    const smart = params.get("mode") === "smart";
+    const capabilities = useLoad(() => api.get("/api/ai/capabilities"));
     const requestedPage = Number(params.get("page") || 1);
-    const page = Number.isInteger(requestedPage) && requestedPage > 0 && requestedPage <= 2147483647
+    const rawPage = Number.isInteger(requestedPage) && requestedPage > 0 && requestedPage <= 2147483647
         ? requestedPage - 1 : 0;
+    const page = smart ? Math.min(rawPage, 4) : rawPage;
     const [q, setQ] = useState(search);
     useEffect(() => setQ(search), [search]);
     const categories = useLoad(() => api.get("/api/categories"));
     const req = useLoad(
         () =>
-            api.get("/api/courses", {
-                params: {q: search, categoryId: category || undefined, page, size: 12},
+            api.get(smart ? "/api/search/courses" : "/api/courses", {
+                params: smart
+                    ? {q: search, categoryId: category || undefined, offset: Math.min(page * 12, 48), limit: 12}
+                    : {q: search, categoryId: category || undefined, page, size: 12},
             }),
-        [search, category, page],
+        [search, category, page, smart],
     );
     function filter(key, value) {
         const next = new URLSearchParams(params);
@@ -38,7 +43,7 @@ export function Catalog() {
         document.getElementById("catalog")?.scrollIntoView({behavior: "smooth"});
     }
     useEffect(() => {
-        if (req.loading || !req.data || req.data.page !== page) return;
+        if (smart || req.loading || !req.data || req.data.page !== page) return;
         const last = Math.max(0, req.data.totalPages - 1);
         if (page > last) {
             const next = new URLSearchParams(params);
@@ -46,7 +51,7 @@ export function Catalog() {
             else next.set("page", String(last + 1));
             setParams(next, {replace: true});
         }
-    }, [req.loading, req.data, page, params, setParams]);
+    }, [req.loading, req.data, page, params, setParams, smart]);
     return (
         <>
             <section className="hero">
@@ -119,6 +124,10 @@ export function Catalog() {
                             onChange={(e) => setQ(e.target.value)}
                         />
                         <button>Tìm kiếm</button>
+                        {(capabilities.data?.search || smart) && <select aria-label="Chế độ tìm kiếm"
+                            value={smart ? "smart" : "keyword"} onChange={e => filter("mode", e.target.value === "smart" ? "smart" : "")}>
+                            <option value="keyword">Từ khóa</option><option value="smart">Thông minh</option>
+                        </select>}
                     </form>
                 </div>
                 <div className="filters">
@@ -145,8 +154,13 @@ export function Catalog() {
                             <CourseCard key={c.id} course={c}/>
                         ))}
                     </div>
-                    <Pagination data={req.data} onChange={changePage} loading={req.loading}/>
-                    {req.data?.totalElements === 0 && (
+                    {smart ? <div className="toolbar">
+                        <button className="secondary" disabled={page === 0 || req.loading} onClick={() => changePage(Math.max(0, page - 1))}>Trang trước</button>
+                        <span>Trang {Math.min(page, 4) + 1} · Tối đa 60 kết quả phù hợp</span>
+                        <button className="secondary" disabled={!req.data?.hasMore || page >= 4 || req.loading} onClick={() => changePage(page + 1)}>Trang sau</button>
+                        {req.data?.mode === "keyword" && <span>Đang dùng tìm kiếm từ khóa.</span>}
+                    </div> : <Pagination data={req.data} onChange={changePage} loading={req.loading}/>}
+                    {req.data?.content.length === 0 && (
                         <div className="empty">
                             Chưa có khóa học phù hợp. Hãy thử từ khóa hoặc danh mục khác.
                         </div>

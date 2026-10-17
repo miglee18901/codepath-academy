@@ -165,7 +165,7 @@
               "datasourceUid": "prometheus",
               "model": {
                 "refId": "A",
-                "expr": "(histogram_quantile(0.95,sum by(le,deployment)(rate(http_server_requests_seconds_bucket{job=\"codepath-backend\",uri!~\"/actuator.*\"}[5m]))) > bool 2) and on(deployment) (sum by(deployment)(increase(http_server_requests_seconds_count{job=\"codepath-backend\",uri!~\"/actuator.*\"}[5m])) >= 100)",
+                "expr": "(histogram_quantile(0.95,sum by(le,deployment)(rate(http_server_requests_seconds_bucket{job=\"codepath-backend\",uri!~\"/actuator.*|/api/courses/[^/]+/assistant|/api/search/courses\"}[5m]))) > bool 2) and on(deployment) (sum by(deployment)(increase(http_server_requests_seconds_count{job=\"codepath-backend\",uri!~\"/actuator.*|/api/courses/[^/]+/assistant|/api/search/courses\"}[5m])) >= 100)",
                 "instant": true,
                 "range": false,
                 "intervalMs": 15000,

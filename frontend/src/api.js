@@ -5,6 +5,8 @@ const api = axios.create({baseURL: apiBase});
 let refreshPromise;
 
 export function clearSession() {
+    Object.keys(sessionStorage).filter(k => k.startsWith("codepath:assistant:"))
+        .forEach(k => sessionStorage.removeItem(k));
     ["token", "refreshToken", "user"].forEach((k) => localStorage.removeItem(k));
 }
 

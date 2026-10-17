@@ -57,12 +57,16 @@ public class SecurityConfig {
                                         "/api/courses",
                                         "/api/courses/*",
                                         "/api/categories",
+                                        "/api/ai/capabilities",
+                                        "/api/search/courses",
                                         "/api/lessons/*",
                                         "/api/lessons/*/playback"
                                 )
                                 .permitAll()
                                 .requestMatchers("/api/admin/**")
                                 .hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/courses/*/assistant")
+                                .authenticated()
                                 .requestMatchers("/api/me/**", "/api/orders/**")
                                 .authenticated()
                                 .anyRequest()

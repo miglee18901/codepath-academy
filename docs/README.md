@@ -7,6 +7,7 @@ Tài liệu mô tả hành vi đang triển khai. Mỗi luồng có một file r
 - [Mô hình dữ liệu](data-model.md)
 - [Thiết lập Mux](mux.md)
 - [Chạy HTTPS qua ngrok](ngrok.md)
+- [Vector Search và trợ lý RAG chạy local](../infra/ai/README.md)
 
 | Luồng | Tài liệu |
 | --- | --- |

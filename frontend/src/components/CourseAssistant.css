@@ -1,0 +1,7 @@
+.course-assistant { margin-top: 2rem; min-width: 0; }
+.course-assistant textarea { width: 100%; resize: vertical; }
+.assistant-messages { max-height: 36rem; overflow-y: auto; margin-bottom: 1rem; }
+.assistant-message { padding: 1rem; border-bottom: 1px solid #dce2e8; overflow-wrap: anywhere; }
+.assistant-message.user { background: #f5f7fa; border-radius: .5rem; }
+.assistant-message p { white-space: pre-wrap; }
+.assistant-message li p { font-size: .85rem; }

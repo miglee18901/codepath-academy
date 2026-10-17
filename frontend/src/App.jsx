@@ -16,6 +16,7 @@ import OAuthCallback from "./pages/OAuthCallback";
 import Auth from "./pages/Auth";
 import {Admin, CourseEditor} from "./pages/Admin";
 import "./App.css";
+import AssistantWidget from "./components/AssistantWidget";
 
 function Layout() {
     const navigate = useNavigate();
@@ -137,6 +138,7 @@ function Layout() {
                 <span>Học từ nền tảng. Xây điều bạn muốn.</span>
                 <span>Java · React · Programming</span>
             </footer>
+            <AssistantWidget key={user?.id ?? "guest"}/>
         </>
     );
 }

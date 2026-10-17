@@ -1,0 +1,41 @@
+name: codepath-ai
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.15.5@sha256:0fb8897412abc81d1c0430a899b9a81eb8328aa634e7242d1bc804c1fe8fe863
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      QDRANT__TELEMETRY_DISABLED: 'true'
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks: [ai]
+    mem_limit: 512m
+    cpus: 1
+  ollama:
+    image: ollama/ollama:0.13.5@sha256:2c9595c555fd70a28363489ac03bd5bf9e7c5bdf2890373c3a830ffd7252ce6d
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: '1'
+      OLLAMA_NUM_PARALLEL: '1'
+      OLLAMA_MAX_LOADED_MODELS: '1'
+      OLLAMA_MAX_QUEUE: '3'
+      OLLAMA_KEEP_ALIVE: '0'
+      OLLAMA_CONTEXT_LENGTH: '4096'
+    volumes:
+      - ollama_data:/root/.ollama
+    networks: [ai]
+    mem_limit: 4g
+    cpus: 3
+    healthcheck:
+      test: [CMD, ollama, list]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+networks:
+  ai:
+    name: ${AI_NETWORK:-codepath-ai}
+volumes:
+  qdrant_data:
+  ollama_data:

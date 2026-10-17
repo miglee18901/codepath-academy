@@ -28,6 +28,7 @@ public class CourseService {
     private final LessonRepository lessons;
     private final EnrollmentRepository enrollments;
     private final LessonProgressRepository progress;
+    private final com.codepath.academy.ai.AiIndexRepository aiIndex;
 
     public static Map<String, Object> view(Object... pairs) {
         Map<String, Object> result = new LinkedHashMap<>();
@@ -359,6 +360,7 @@ public class CourseService {
         c.setLevel(in.level());
         c.setPublished(in.published());
         courses.save(c);
+        aiIndex.enqueue(c.getId());
         return detail(c.getId(), admin);
     }
 
@@ -373,12 +375,14 @@ public class CourseService {
         s.setCourseId(courseId);
         s.setTitle(in.title().strip());
         s.setPosition(in.position());
-        return sections.save(s);
+        sections.save(s);
+        aiIndex.enqueue(courseId);
+        return s;
     }
 
     @Transactional
     public Lesson saveLesson(Long sectionId, Long id, LessonInput in) {
-        sections.findById(sectionId).orElseThrow(CourseService::missing);
+        CourseSection parent = sections.findById(sectionId).orElseThrow(CourseService::missing);
         validateUrl(in.videoUrl());
         Lesson l =
                 id == null
@@ -392,13 +396,16 @@ public class CourseService {
         l.setDurationMinutes(in.durationMinutes());
         l.setPosition(in.position());
         l.setPreview(in.preview());
-        return lessons.save(l);
+        lessons.save(l);
+        aiIndex.enqueue(parent.getCourseId());
+        return l;
     }
 
     @Transactional
     public void deleteLesson(Long id) {
         Lesson lesson = lessons.lockById(id).orElseThrow(CourseService::missing);
         requireNoMuxVideo(lesson);
+        aiIndex.enqueue(sections.findById(lesson.getSectionId()).orElseThrow(CourseService::missing).getCourseId());
         lessons.delete(lesson);
     }
 
@@ -407,6 +414,7 @@ public class CourseService {
         CourseSection s = sections.findById(id).orElseThrow(CourseService::missing);
         var chapterLessons = lessons.findBySectionIdOrderByPositionAscIdAsc(id);
         chapterLessons.forEach(this::requireNoMuxVideo);
+        aiIndex.enqueue(s.getCourseId());
         lessons.deleteAll(chapterLessons);
         sections.delete(s);
     }

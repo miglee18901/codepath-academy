@@ -51,6 +51,19 @@ mux:
   signing-key-id: ${MUX_SIGNING_KEY_ID:}
   signing-private-key: ${MUX_SIGNING_PRIVATE_KEY:}
 app:
+  ai:
+    search-enabled: ${AI_SEARCH_ENABLED:false}
+    assistant-enabled: ${AI_ASSISTANT_ENABLED:false}
+    indexing-enabled: ${AI_INDEXING_ENABLED:false}
+    ollama-url: ${AI_OLLAMA_URL:http://localhost:11434}
+    qdrant-url: ${AI_QDRANT_URL:http://localhost:6333}
+    qdrant-api-key: ${AI_QDRANT_API_KEY:}
+    collection: ${AI_COLLECTION:codepath_local_v1}
+    embedding-model: ${AI_EMBEDDING_MODEL:embeddinggemma:300m}
+    chat-model: ${AI_CHAT_MODEL:qwen3:4b-instruct-2507-q4_K_M}
+    dimensions: ${AI_EMBEDDING_DIMENSIONS:768}
+    min-score: ${AI_MIN_SCORE:0.35}
+    num-threads: ${AI_NUM_THREADS:3}
   oauth:
     callback-base-url: ${OAUTH_CALLBACK_BASE_URL:}
     google:

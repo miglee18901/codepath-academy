@@ -1,0 +1,10 @@
+{
+  "images": {
+    "ollama/ollama:0.13.5": "sha256:2c9595c555fd70a28363489ac03bd5bf9e7c5bdf2890373c3a830ffd7252ce6d",
+    "qdrant/qdrant:v1.15.5": "sha256:0fb8897412abc81d1c0430a899b9a81eb8328aa634e7242d1bc804c1fe8fe863"
+  },
+  "models": {
+    "embeddinggemma:300m": "85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1",
+    "qwen3:4b-instruct-2507-q4_K_M": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0"
+  }
+}
